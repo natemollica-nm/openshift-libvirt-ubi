@@ -49,7 +49,7 @@ check_url "Installer" "$INSTALLER_URL" "$INSTALLER"
 
 OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/')
 
-# Determine RHCOS release version and construct the urldir
+# Determine RHCOS release version
 if [[ -z "$RHCOS_VERSION" ]]; then
     RHCOS_VER="$OCP_VER"
     RHCOS_MINOR="latest"
@@ -59,20 +59,16 @@ else
     RHCOS_MINOR="${RHCOS_MINOR:-latest}"
 fi
 
-# Construct the RHCOS urldir variable
-if [[ "$RHCOS_MINOR" == "latest" ]]; then
-    urldir="${RHCOS_VER}/latest"
-else
-    urldir="${RHCOS_VER}/${RHCOS_MINOR}"
-fi
+# Combine RHCOS_VER and RHCOS_MINOR to form urldir
+urldir="${RHCOS_VER}/${RHCOS_MINOR}"
 
 # RHCOS kernel, initramfs, and image download links
 KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
-KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
+KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}"
 check_url "Kernel" "$KERNEL_URL" "$KERNEL"
 
 INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
-INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
+INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
@@ -83,7 +79,7 @@ elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
 else
     err "Unhandled RHCOS configuration. Exiting."
 fi
-IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
+IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
 RHCOS_NORMALIZED_VER="$(echo "${IMAGE}" | sed 's/.*-\(4\..*\)-x86.*/\1/')"

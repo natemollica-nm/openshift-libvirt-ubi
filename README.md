@@ -6,6 +6,83 @@
 - Virtualization enabled and Libvirt/KVM setup [(more details)](https://github.com/kxr/ocp4_setup_upi_kvm/wiki/Setup-KVM-Libvirt)
 - DNS on the host managed by dnsmasq or NetworkManager/dnsmasq [(more details)](https://github.com/kxr/ocp4_setup_upi_kvm/wiki/Setting-Up-DNS)
 - OpenShift 4 Pull secret (Download from [here](https://cloud.redhat.com/openshift/install/pull-secret))
+- Helm Installation `bash <(curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3)`
+- YQ: 
+```shell
+BINARY=yq_linux_amd64 
+LATEST=$(wget -qO- https://api.github.com/repos/mikefarah/yq/releases/latest 2>/dev/null | grep browser_download_url | grep $BINARY\"\$|awk '{print $NF}' )
+sudo wget -q $LATEST -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+```
+
+### RHEL Subscription Manager
+
+```shell
+subscription-manager register --username <$INSERT_USERNAME_HERE> --password <$INSERT_PASSWORD_HERE>
+```
+
+Install Virtualization Hypervisor packages
+
+```shell
+dnf install qemu-kvm libvirt virt-install virt-viewer
+dnf install qemu-img libvirt-client libguestfs-tools-c
+```
+
+Start the Virtualization services
+
+```shell
+for drv in qemu interface network nodedev nwfilter secret storage; do 
+  systemctl unmask virt${drv}d.service; 
+  systemctl unmask virt${drv}d{,-ro,-admin}.socket; 
+  systemctl enable virt${drv}d.service; 
+  systemctl enable virt${drv}d{,-ro,-admin}.socket; 
+done
+for drv in qemu network nodedev nwfilter secret storage interface; do 
+    systemctl start virt${drv}d{,-ro,-admin}.socket 
+done
+```
+
+Enabled remote host virtualization proxy daemon
+
+```shell
+systemctl unmask virtproxyd.service
+systemctl unmask virtproxyd{,-ro,-admin}.socket
+systemctl enable virtproxyd.service
+systemctl enable virtproxyd{,-ro,-admin}.socket
+systemctl start virtproxyd{,-ro,-admin}.socket
+```
+
+
+### Recommended EC2 Instance Types:
+
+AWS EC2 instances that would fit running x2 clusters
+
+For each cluster, you need the following resources:
+
+* **_1 Bootstrap node_**: `4 vCPUs` / `16 GiB`
+* **_3 Master nodes_**: `4 vCPUs` / `16 GiB` each
+* **_2 Worker nodes_**: `4 vCPUs` / `16 GiB` each
+* **_1 Load balancer node_**: `4 vCPUs` / `8 GiB` memory
+
+This gives a total per cluster of:
+* **Total vCPUs** = 1 x 4 (Bootstrap) + 3 x 4 (Masters) + 2 x 4 (Workers) + 1 x 4 (Load Balancer) = 32 vCPUs
+* **Total Memory** = 1 x 16 GiB (Bootstrap) + 3 x 16 GiB (Masters) + 2 x 16 GiB (Workers) + 1 x 8 GiB (Load Balancer) = 104 GiB
+
+Since you are deploying two clusters, the total resource requirements across both clusters are:
+* **Total vCPUs for two clusters** = 32 x 2 = 64 vCPUs
+* **Total memory for two clusters** = 104 GiB x 2 = 208 GiB
+
+**_m5.24xlarge_**:
+* 96 vCPUs
+* 384 GiB memory
+
+This would provide sufficient resources for both clusters with overhead for OpenShift operations.
+
+**_m5.metal_**:
+* 96 vCPUs
+* 384 GiB memory
+
+Offers bare metal performance with the same vCPU and memory resources.
+
 
 ## Installing OpenShift 4 Cluster
 

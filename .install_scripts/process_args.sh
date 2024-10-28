@@ -54,6 +54,7 @@ case $key in
     ;;
     -v|--vm-dir)
     export VM_DIR="$2"
+    VM_DIR="$(readlink -f "$VM_DIR")"
     shift
     shift
     ;;

@@ -37,7 +37,6 @@ echo -n "====> Checking if Installer URL is downloadable: ";  download check "$I
 OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/' )
 
 # RHCOS KERNEL, INITRAMFS AND IMAGE FILES
-
 if [ -z "$RHCOS_VERSION" ]; then
     RHCOS_VER=$(echo "${OCP_NORMALIZED_VER}" | cut -d '.' -f1-2 )
     RHCOS_MINOR="latest"

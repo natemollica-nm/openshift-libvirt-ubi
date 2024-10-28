@@ -169,7 +169,7 @@ cat <<EOF > ${HAPROXY_CFG}
         user        haproxy
         group       haproxy
         daemon
-        stats socket /var/lib/haproxy/stats
+        stats socket /var/lib/haproxy/stats mode 660 user haproxy group haproxy
         ssl-default-bind-ciphers PROFILE=SYSTEM
         ssl-default-server-ciphers PROFILE=SYSTEM
     defaults
@@ -230,9 +230,12 @@ EOF
     echo "# To apply, simply move this config to haproxy. e.g:"
     echo 
     echo "      mv '$HAPROXY_CFG' '/etc/haproxy/haproxy.cfg'"
+    echo "      chown haproxy:haproxy /etc/haproxy/haproxy.cfg"
+    echo "      chmod 644 /etc/haproxy/haproxy.cfg"
+    echo "      chmod 755 /etc/haproxy"
     echo 
     echo "# haproxy can be used to front multiple clusters. If that is the case,"
-    echo "# you only need to merge the 'use_backend' lines and the 'backend' blocks from this confiugration in haproxy.cfg"
+    echo "# you only need to merge the 'use_backend' lines and the 'backend' blocks from this configuration in haproxy.cfg"
     echo
     echo "# You will also need to open the ports (80,443 and 6443) e.g:"
     echo
@@ -244,14 +247,80 @@ EOF
     echo "# If SELinux is in Enforcing mode, you need to tell it to treat port 6443 as a webport, e.g:"
     echo
     echo "      semanage port -a -t http_port_t -p tcp 6443"
+    echo "      ausearch -c 'haproxy' --raw | audit2allow -M haproxy_custom"
+    echo "      semodule -i haproxy_custom.pp"
     echo
     echo
 
 
-## TODO --method iptables
-#elif [ "$EXPOSE_METHOD" == "iptables" ]; then
+# --method iptables
+elif [ "$EXPOSE_METHOD" == "iptables" ]; then
+    # Checking if ip_forward is enabled
+    echo -n "====> Checking if ip_forward is enabled: "
+    IP_FWD=$(cat /proc/sys/net/ipv4/ip_forward)
+    test "$IP_FWD" = "1" || \
+        err "IP forwarding not enabled." "/proc/sys/net/ipv4/ip_forward has $IP_FWD"; ok
+
+    # Determine the libvirt interface
+    echo -n "====> Determining the libvirt interface: "
+    VIR_INT=$(virsh net-info ${VIR_NET} | grep Bridge | awk '{print $2}' 2> /dev/null) && \
+    test -n "$VIR_INT" || \
+        err "Unable to find interface for libvirt network"; ok
+
+    # Checking if we have existing iptables port forwarding
+    echo -n "====> Checking if we have existing port forwarding: "
+    EXIS_FWD=$(iptables -t nat -L PREROUTING -n -v | grep -E '80|443|6443') || true
+    test -z "$EXIS_FWD" || \
+        {
+            echo "Error"
+            echo
+            echo "# Existing port forwarding found which is conflicting"
+            echo "# Please delete these rules:"
+            echo
+            for x in ${EXIS_FWD}; do
+                echo "iptables -t nat -D PREROUTING ${x}"
+            done
+            err ""
+        }
+    ok
+
+    echo
+    echo "######################"
+    echo "### IPTABLES RULES ###"
+    echo "######################"
+    echo
+    echo "# This script will now try to add the following iptables rules"
+    echo "# To make the rules persistent, save them using iptables-save"
+    echo
+    echo "iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination ${LBIP}:443"
+    echo "iptables -t nat -A PREROUTING -p tcp --dport 6443 -j DNAT --to-destination ${LBIP}:6443"
+    echo "iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination ${LBIP}:80"
+    echo "iptables -A FORWARD -i ${VIR_INT} -j ACCEPT"
+    echo "iptables -A FORWARD -o ${VIR_INT} -j ACCEPT"
+    echo "iptables -t nat -A POSTROUTING -o ${VIR_INT} -j MASQUERADE"
+    echo
+    check_if_we_can_continue
+
+    echo -n "====> Adding port forwarding for HTTPS (443): "
+    iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination ${LBIP}:443 || echo "Failed"
+
+    echo -n "====> Adding port forwarding for OpenShift API (6443): "
+    iptables -t nat -A PREROUTING -p tcp --dport 6443 -j DNAT --to-destination ${LBIP}:6443 || echo "Failed"
+
+    echo -n "====> Adding port forwarding for HTTP (80): "
+    iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination ${LBIP}:80 || echo "Failed"
+
+    echo -n "====> Allowing forwarding for incoming traffic on ${VIR_INT}: "
+    iptables -A FORWARD -i ${VIR_INT} -j ACCEPT || echo "Failed"
+
+    echo -n "====> Allowing forwarding for outgoing traffic on ${VIR_INT}: "
+    iptables -A FORWARD -o ${VIR_INT} -j ACCEPT || echo "Failed"
+
+    echo -n "====> Enabling masquerading: "
+    iptables -t nat -A POSTROUTING -o ${VIR_INT} -j MASQUERADE || echo "Failed"
+
 else
-    err "Unkown method"
+    err "Unknown method"
 fi
 
 
@@ -263,5 +332,4 @@ echo "        For basic api/console access, the following /etc/hosts entry shoul
 echo
 echo "        <IP-of-this-host> api.${CLUSTER_NAME}.${BASE_DOM} console-openshift-console.apps.${CLUSTER_NAME}.${BASE_DOM} oauth-openshift.apps.${CLUSTER_NAME}.${BASE_DOM}"
 echo
-
 exit 0

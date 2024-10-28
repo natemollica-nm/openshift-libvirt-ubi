@@ -8,9 +8,8 @@ echo
 
 
 echo -n "====> Checking if we have all the dependencies: "
-for x in virsh virt-install virt-customize systemctl dig wget
-do
-    builtin type -P $x &> /dev/null || err "executable $x not found"
+for x in virsh virt-install virt-customize systemctl dig wget; do
+    builtin type -P $x >/dev/null 2>&1 || err "executable $x not found"
 done
 test -n "$(find /usr -type f -name libvirt_driver_network.so 2> /dev/null)" || \
 	err "libvirt_driver_network.so not found"
@@ -30,10 +29,11 @@ test -f "${PULL_SEC_F}" \
     || err "Pull secret not found." \
            "Please specify the pull secret file using -p or --pull-secret"
 ok
-
-echo -n "====> Checking if libvirt is running or enabled: "
-    systemctl -q is-active libvirtd || systemctl -q is-enabled libvirtd || err "libvirtd is not running nor enabled"
-ok
+for drv in qemu interface network nodedev nwfilter secret storage; do
+    echo -n "====> Checking if virt${drv}d is running or enabled: "
+        systemctl -q is-active virt${drv}d || systemctl -q is-enabled virt${drv}d || err "virt${drv}d is not running nor enabled"
+    ok
+done
 
 echo -n "====> Checking if we have any existing leftover VMs: "
 existing=$(virsh list --all --name | grep -m1 "${CLUSTER_NAME}-lb\|${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap") || true
@@ -67,10 +67,11 @@ fi
 echo -n "====> Testing dnsmasq reload (systemctl ${DNS_CMD} ${DNS_SVC}): "
 systemctl $DNS_CMD $DNS_SVC || err "systemctl ${DNS_CMD} ${DNS_SVC} failed"
 ok
-
-echo -n "====> Testing libvirtd restart (systemctl restart libvirtd): "
-systemctl restart libvirtd || err "systemctl restart libvirtd failed"
-ok
+for drv in qemu interface network nodedev nwfilter secret storage; do
+    echo -n "====> Testing virt${drv}d restart (systemctl restart virt${drv}d): "
+    systemctl restart virt${drv}d || err "systemctl restart virt${drv}d failed"
+    ok
+done
 
 echo -n "====> Checking for any leftover dnsmasq config: "
 test -f "${DNS_DIR}/${CLUSTER_NAME}.conf" && err "Existing dnsmasq config file found: ${DNS_DIR}/${CLUSTER_NAME}.conf"

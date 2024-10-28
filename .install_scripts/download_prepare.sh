@@ -6,8 +6,6 @@ echo "### DOWNLOAD AND PREPARE OPENSHIFT 4 INSTALLATION ###"
 echo "#####################################################"
 echo
 
-
-
 echo -n "====> Creating and using directory ${SETUP_DIR}: "
 mkdir -p ${SETUP_DIR} && cd ${SETUP_DIR} || err "using ${SETUP_DIR} failed"
 ok
@@ -73,7 +71,7 @@ networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   serviceNetwork:
   - 172.30.0.0/16
 platform:
@@ -87,14 +85,13 @@ echo "====> Creating ignition configs: "
 ./openshift-install create ignition-configs --dir=./install_dir || \
     err "./openshift-install create ignition-configs --dir=./install_dir failed"
 
-WS_PORT="1234"
 cat <<EOF > tmpws.service
 [Unit]
 After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt
-ExecStart=/usr/bin/python -m SimpleHTTPServer ${WS_PORT}
+ExecStart=/usr/bin/python3 -m http.server ${WS_PORT}
 [Install]
 WantedBy=default.target
 EOF
@@ -126,7 +123,8 @@ defaults
   timeout check 10s
   maxconn 3000
 # 6443 points to control plan
-frontend ${CLUSTER_NAME}-api *:6443
+frontend ${CLUSTER_NAME}-api
+  bind *:6443
   default_backend master-api
 backend master-api
   balance source
@@ -138,7 +136,8 @@ done
 echo "
 
 # 22623 points to control plane
-frontend ${CLUSTER_NAME}-mapi *:22623
+frontend ${CLUSTER_NAME}-mapi
+  bind *:22623
   default_backend master-mapi
 backend master-mapi
   balance source
@@ -149,7 +148,8 @@ do
 done
 echo "
 # 80 points to master nodes
-frontend ${CLUSTER_NAME}-http *:80
+frontend ${CLUSTER_NAME}-http
+  bind *:80
   default_backend ingress-http
 backend ingress-http
   balance source" >> haproxy.cfg
@@ -159,7 +159,8 @@ do
 done
 echo "
 # 443 points to master nodes
-frontend ${CLUSTER_NAME}-https *:443
+frontend ${CLUSTER_NAME}-https
+  bind *:443
   default_backend infra-https
 backend infra-https
   balance source" >> haproxy.cfg

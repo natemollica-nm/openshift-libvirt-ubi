@@ -11,7 +11,7 @@ export COLS="$(stty size | awk '{print $2}')"
 source ${SDIR}/.install_scripts/utils.sh
 
 # Checking if we are root
-test "$(whoami)" = "root" || err "Not running as root"
+test "$(whoami)" = root || err "Not running as root"
 
 # Process Arguments
 source ${SDIR}/.defaults.sh
@@ -22,6 +22,9 @@ if [ "${DESTROY}" == "yes" ]; then
     source ${SDIR}/.install_scripts/destroy.sh
     exit 0
 fi
+
+# https://www.libguestfs.org/guestfs.3.html#backend
+export LIBGUESTFS_BACKEND=direct
 
 # Dependencies & Sanity checks
 source ${SDIR}/.install_scripts/sanity_check.sh

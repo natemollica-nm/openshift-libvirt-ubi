@@ -33,15 +33,13 @@ download() {
 
     mkdir -p "${CACHE_DIR}"
 
-    if [ "${cmd}" == "check" ]
-    then
+    if [ "${cmd}" == "check" ]; then
         if [ -f "${CACHE_DIR}/${file}" ]; then
             echo "(reusing cached file ${file})"
         else
             timeout 10 curl -qs --head --fail "${url}" &> /dev/null && ok || err "${url} not reachable"
         fi
-    elif [ "${cmd}" == "get" ]
-    then
+    elif [ "${cmd}" == "get" ]; then
         if [ "${FRESH_DOWN}" == "yes" -a -f "${CACHE_DIR}/${file}" ]; then
             rm -f "${CACHE_DIR}/${file}" || err "Error removing ${CACHE_DIR}/${file}"
         fi

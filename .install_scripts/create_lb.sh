@@ -6,26 +6,41 @@ echo "### CREATING LOAD BALANCER VM ###"
 echo "#################################"
 echo
 
+LB_IMG="${LB_IMG_URL##*/}"
+echo -n "====> Downloading ${LB_IMG} cloud image: "; download get "$LB_IMG" "$LB_IMG_URL";
 
-echo -n "====> Downloading Centos 7 cloud image: "; download get "$LB_IMG" "$LB_IMG_URL";
-
-echo -n "====> Copying Image for Loadbalancer VM: "
-cp "${CACHE_DIR}/CentOS-7-x86_64-GenericCloud.qcow2" "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" || \
-    err "Copying '${VM_DIR}/CentOS-7-x86_64-GenericCloud.qcow2' to '${VM_DIR}/${CLUSTER_NAME}-lb.qcow2' failed"; ok
+echo -n "====> Copying ${LB_IMG} for Loadbalancer VM: "
+cp "${CACHE_DIR}/${LB_IMG}" "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" || \
+    err "Copying '${CACHE_DIR}/${LB_IMG}' to '${VM_DIR}/${CLUSTER_NAME}-lb.qcow2' failed"; ok
 
 echo "====> Setting up Loadbalancer VM: "
 virt-customize -a "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
-    --uninstall cloud-init --ssh-inject root:file:${SSH_PUB_KEY_FILE} --selinux-relabel --install haproxy --install bind-utils \
-    --copy-in install_dir/bootstrap.ign:/opt/ --copy-in install_dir/master.ign:/opt/ --copy-in install_dir/worker.ign:/opt/ \
-    --copy-in "${CACHE_DIR}/${IMAGE}":/opt/ --copy-in tmpws.service:/etc/systemd/system/ \
+    --uninstall cloud-init \
+    --ssh-inject root:file:${SSH_PUB_KEY_FILE} \
+    --selinux-relabel \
+    --install haproxy \
+    --install bind-utils \
+    --copy-in install_dir/bootstrap.ign:/opt/ \
+    --copy-in install_dir/master.ign:/opt/ \
+    --copy-in install_dir/worker.ign:/opt/ \
+    --copy-in "${CACHE_DIR}/${IMAGE}":/opt/ \
+    --copy-in tmpws.service:/etc/systemd/system/ \
     --copy-in haproxy.cfg:/etc/haproxy/ \
-    --run-command "systemctl daemon-reload" --run-command "systemctl enable tmpws.service" || \
+    --run-command "systemctl daemon-reload" \
+    --run-command "systemctl enable tmpws.service" || \
     err "Setting up Loadbalancer VM image ${VM_DIR}/${CLUSTER_NAME}-lb.qcow2 failed"
 
 echo -n "====> Creating Loadbalancer VM: "
-virt-install --import --name ${CLUSTER_NAME}-lb --disk "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
-    --memory ${LB_MEM} --cpu host --vcpus ${LB_CPU} --os-type linux --os-variant rhel7.0 --network network=${VIR_NET},model=virtio \
-    --noreboot --noautoconsole > /dev/null || \
+virt-install --name ${CLUSTER_NAME}-lb \
+    --import \
+    --cpu host \
+    --vcpus ${LB_CPU} \
+    --memory ${LB_MEM} \
+    --os-variant rhel9.0 \
+    --disk "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
+    --network network=${VIR_NET},model=virtio \
+    --noreboot \
+    --noautoconsole > /dev/null || \
     err "Creating Loadbalancer VM from ${VM_DIR}/${CLUSTER_NAME}-lb.qcow2 failed"; ok
 
 echo -n "====> Starting Loadbalancer VM "

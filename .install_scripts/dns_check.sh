@@ -9,7 +9,7 @@ echo
 reload_dns(){
     systemctl $DNS_CMD $DNS_SVC || err "systemctl $DNS_CMD $DNS_SVC failed"; echo -n "."
     sleep 5
-    systemctl restart libvirtd || err "systemctl restart libvirtd failed"; echo -n "."
+    systemctl restart virtnetworkd || err "systemctl restart virtnetworkd failed"; echo -n "."
     sleep 5
 }
 

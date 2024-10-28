@@ -37,10 +37,13 @@ export BTS_CPU="4"
 export BTS_MEM="16000"
 
 # --lb-cpu N(vCPU)
-export LB_CPU="1"
+export LB_CPU="4"
 
 # --lb-mem SIZE(MB)
-export LB_MEM="1024"
+export LB_MEM="1536"
+
+# loadBalancer VM python WebServer port
+export WS_PORT="1234"
 
 # -n, --libvirt-network NETWORK
 export DEF_LIBVIRT_NET="default"
@@ -99,4 +102,4 @@ export YES="no"
 
 export OCP_MIRROR="https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 export RHCOS_MIRROR="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos"
-export LB_IMG_URL="https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+export LB_IMG_URL="https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20231002.0.x86_64.qcow2"

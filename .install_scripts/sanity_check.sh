@@ -76,8 +76,12 @@ check_pull_secret() {
 start_libvirt_services() {
     local service
     for service in qemu interface network nodedev nwfilter secret storage log; do
+        echo -n "====> Unmasking virt${service} service: "
+        systemctl unmask virt${service}d.service || \
+            err "virt${service}d is not running nor enabled"
+        ok
         echo -n "====> Unmasking virt${service} socket: "
-        systemctl unmask virt${service}d.service; systemctl unmask virt${service}d{,-ro,-admin}.socket || \
+        systemctl unmask virt${service}d{,-ro,-admin}.socket || \
             err "virt${service}d is not running nor enabled"
         ok
         echo -n "====> Enabling virt${service} socket: "

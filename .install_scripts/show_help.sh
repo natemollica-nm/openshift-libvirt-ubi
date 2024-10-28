@@ -148,7 +148,7 @@ Examples:
     ${0} --ocp-version 4.17.0 --rhcos-version 4.17.1
 
     # Deploy latest OpenShift version with pull secret from a custom location
-    ${0} --pull-secret /${HOME}/Downloads/pull-secret --ocp-version latest
+    ${0} --pull-secret ${HOME}/Downloads/pull-secret --ocp-version latest
 
     # Deploy OpenShift 4.16.latest with custom cluster name and domain
     ${0} --cluster-name ocp-01 --cluster-domain lab.test.com --ocp-version 4.16.latest

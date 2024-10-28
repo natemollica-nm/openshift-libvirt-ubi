@@ -2,6 +2,12 @@
 # OpenShift UPI installation script
 # https://github.com/kxr/ocp4_setup_upi_kvm
 
+# Force the script to run as root
+if [[ "$EUID" -ne 0 ]]; then
+  echo "This script must be run as root. Restarting with sudo..."
+  exec sudo "$0" "$@"
+fi
+
 set -e
 
 export START_TS=$(date +%s)

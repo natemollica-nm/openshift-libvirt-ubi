@@ -12,7 +12,7 @@ check_url() {
     local url="$2"
     local file="$3"
 
-    echo -n "====> Checking if ${name} URL is downloadable: "
+    echo "====> Checking if ${name} URL is downloadable: "
     download check "$file" "$url"
 }
 
@@ -23,7 +23,7 @@ lookup_release_file() {
     local pattern="$3"
     local file
 
-    echo -n "====> Looking up ${description} for release $url: "
+    echo "====> Looking up ${description} for release $url: "
     file=$(curl -N --fail -qs "$url" | grep -m1 "$pattern" | sed 's/.*href="\(.*\)">.*/\1/')
     test -n "$file" && ok "$file" || err "No ${description} found at ${url}"
     echo "$file"
@@ -40,11 +40,11 @@ else
 fi
 
 # OpenShift client and installer download links
-CLIENT=$(lookup_release_file "OCP4 client" "${OCP_MIRROR}/${urldir}/" "client-linux")
+CLIENT="$(lookup_release_file "OCP4 client" "${OCP_MIRROR}/${urldir}/" "client-linux")"
 CLIENT_URL="${OCP_MIRROR}/${urldir}/${CLIENT}"
 check_url "Client" "$CLIENT_URL" "$CLIENT"
 
-INSTALLER=$(lookup_release_file "OCP4 installer" "${OCP_MIRROR}/${urldir}/" "install-linux")
+INSTALLER="$(lookup_release_file "OCP4 installer" "${OCP_MIRROR}/${urldir}/" "install-linux")"
 INSTALLER_URL="${OCP_MIRROR}/${urldir}/${INSTALLER}"
 check_url "Installer" "$INSTALLER_URL" "$INSTALLER"
 
@@ -61,26 +61,26 @@ fi
 urldir="${RHCOS_VER}/${RHCOS_MINOR}"
 
 # RHCOS kernel, initramfs, and image download links
-KERNEL=$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")
+KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
 KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
 check_url "Kernel" "$KERNEL_URL" "$KERNEL"
 
-INITRAMFS=$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")
+INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
 INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
 if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
-    IMAGE=$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")
+    IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
 elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
-    IMAGE=$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")
+    IMAGE="$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")"
 else
     err "Unhandled RHCOS configuration. Exiting."
 fi
 IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
-RHCOS_NORMALIZED_VER=$(echo "${IMAGE}" | sed 's/.*-\(4\..*\)-x86.*/\1/')
+RHCOS_NORMALIZED_VER="$(echo "${IMAGE}" | sed 's/.*-\(4\..*\)-x86.*/\1/')"
 
 # CentOS cloud image check
 LB_IMG="${LB_IMG_URL##*/}"

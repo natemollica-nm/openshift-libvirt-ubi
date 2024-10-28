@@ -23,7 +23,6 @@ lookup_release_file() {
     local pattern="$3"
     local file
 
-    echo "====> Looking up ${description} for release $url: "
     file=$(curl -N --fail -qs "$url" | grep -m1 "$pattern" | sed 's/.*href="\(.*\)">.*/\1/')
     test -n "$file" && ok "$file" || err "No ${description} found at ${url}"
     echo "$file"

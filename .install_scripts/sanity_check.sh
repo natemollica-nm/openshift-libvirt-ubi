@@ -75,26 +75,26 @@ check_pull_secret() {
 # Function to enable/start libvirt modular daemons
 start_libvirt_services() {
     local service
-    for service in qemu interface network nodedev nwfilter secret storage log; do
+    for service in qemu interface network nodedev nwfilter secret storage; do
         echo -n "====> Unmasking virt${service} service: "
         systemctl unmask virt${service}d.service || \
-            err "virt${service}d is not running nor enabled"
+            err "Failed to unmask virt${service}d"
         ok
         echo -n "====> Unmasking virt${service} socket: "
         systemctl unmask virt${service}d{,-ro,-admin}.socket || \
-            err "virt${service}d is not running nor enabled"
+            err "Failed to unmask virt${service}d-ro, or virt${service}d-admin socket"
         ok
         echo -n "====> Enabling virt${service} socket: "
         systemctl enable virt${service}d{,-ro,-admin}.socket || \
-            err "virt${service}d is not running nor enabled"
+            err "Failed to enable virt${service}d-ro, or virt${service}d-admin socket"
         ok
         echo -n "====> Enabling virt${service} systemd unit: "
         systemctl enable virt${service}d.service || \
-            err "virt${service}d is not running nor enabled"
+            err "Failed to enable virt${service}d systemd unit"
         ok
         echo -n "====> Starting virt${service} socket: "
         systemctl start virt${service}d{,-ro,-admin}.socket || \
-            err "virt${service}d is not running nor enabled"
+            err "Failed to start virt${service}d-ro, or virt${service}d-admin socket"
         ok
     done
 }

@@ -135,7 +135,7 @@ check_dns_service() {
 
     if [[ "${DNS_SVC}" == "NetworkManager" ]]; then
         echo -n "====> Checking if dnsmasq is enabled in NetworkManager: "
-        grep -qr dnsmasq /etc/NetworkManager/*.conf || err "dnsmasq not enabled in NetworkManager" \
+        grep -qr dnsmasq /etc/NetworkManager/conf.d/*.conf || err "dnsmasq not enabled in NetworkManager" \
             "See: https://github.com/kxr/ocp4_setup_upi_kvm/wiki/Setting-Up-DNS"
         ok
     fi

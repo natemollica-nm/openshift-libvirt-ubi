@@ -13,7 +13,7 @@ Options:
 
     -R, --rhcos-version VERSION
         The Red Hat CoreOS (RHCOS) Version to use.
-        You can set a specific RHCOS version to use. For example "4.1.0", "4.2.latest" etc. By default the RHCOS version is matched from the OpenShift version. For example, if you selected 4.1.2  RHCOS 4.1/latest will be used.
+        You can set a specific RHCOS version to use. For example "4.1.0", "4.16.latest" etc. By default the RHCOS version is matched from the OpenShift version. For example, if you selected 4.1.2  RHCOS 4.1/latest will be used.
         Default: ${RHCOS_VERSION}
 
     -p, --pull-secret FILE
@@ -141,22 +141,22 @@ Note: The default values for all these options can be changed in the .defaults.s
 
 Examples:
 
-    # Deploy OpenShift 4.3.12 cluster
-    ${0} --ocp-version 4.3.12
+    # Deploy OpenShift 4.17.0 cluster
+    ${0} --ocp-version 4.17.0
 
-    # Deploy OpenShift 4.3.12 cluster with RHCOS 4.3.0
-    ${0} --ocp-version 4.3.12 --rhcos-version 4.3.0
+    # Deploy OpenShift 4.17.0 cluster with RHCOS 4.17.1
+    ${0} --ocp-version 4.17.0 --rhcos-version 4.17.1
 
     # Deploy latest OpenShift version with pull secret from a custom location
-    ${0} --pull-secret /home/knaeem/Downloads/pull-secret --ocp-version latest
+    ${0} --pull-secret /${HOME}/Downloads/pull-secret --ocp-version latest
 
-    # Deploy OpenShift 4.2.latest with custom cluster name and domain
-    ${0} --cluster-name ocp43 --cluster-domain lab.test.com --ocp-version 4.2.latest
+    # Deploy OpenShift 4.16.latest with custom cluster name and domain
+    ${0} --cluster-name ocp-01 --cluster-domain lab.test.com --ocp-version 4.16.latest
 
-    # Deploy OpenShift 4.2.stable on new libvirt network (192.168.155.0/24)
-    ${0} --ocp-version 4.2.stable --libvirt-oct 155
+    # Deploy OpenShift 4.14.stable on new libvirt network (192.168.155.0/24)
+    ${0} --ocp-version 4.14.stable --libvirt-oct 155
 
-    # Destory the already installed cluster
-    ${0} --cluster-name ocp43 --cluster-domain lab.test.com --destroy
+    # Destroy the already installed cluster
+    ${0} --cluster-name ocp-01 --cluster-domain lab.test.com --destroy
 
 EOF

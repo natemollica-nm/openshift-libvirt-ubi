@@ -1,65 +1,102 @@
 #!/bin/bash
 
-echo 
+echo
 echo "##################"
 echo "####  DESTROY  ###"
 echo "##################"
-echo 
+echo
 
-if [ -n "$VIR_NET_OCT" -a -z "$VIR_NET" ]; then
-    VIR_NET="ocp-${VIR_NET_OCT}"
-fi
+# Set the virtual network if VIR_NET_OCT is defined
+[[ -n "$VIR_NET_OCT" && -z "$VIR_NET" ]] && VIR_NET="ocp-${VIR_NET_OCT}"
 
-for vm in $(virsh list --all --name | grep "${CLUSTER_NAME}-lb\|${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap"); do
+# Function to remove a VM and its DHCP reservation
+remove_vm() {
+    local vm="$1"
     check_if_we_can_continue "Deleting VM $vm"
-    MAC=$(virsh domiflist "$vm" | grep network | awk '{print $5}')
-    DHCP_LEASE=$(virsh net-dumpxml ${VIR_NET} | grep '<host ' | grep "$MAC" | sed 's/^[ ]*//')
+
+    local mac dhcp_lease
+    mac=$(virsh domiflist "$vm" | awk '/network/ {print $5}')
+    dhcp_lease=$(virsh net-dumpxml "${VIR_NET}" | grep '<host ' | grep "$mac" | sed 's/^[ ]*//')
+
     echo -n "XXXX> Deleting DHCP reservation for VM $vm: "
-        virsh net-update ${VIR_NET} delete ip-dhcp-host --xml "$DHCP_LEASE" --live --config &> /dev/null || \
-            echo -n "dhcp reservation delete failed (ignoring) ... "
-        ok
+    virsh net-update "${VIR_NET}" delete ip-dhcp-host --xml "$dhcp_lease" --live --config >/dev/null 2>&1 || \
+        echo -n "Failed to delete DHCP reservation (ignoring) ... "
+    ok
+
     echo -n "XXXX> Deleting VM $vm: "
-        virsh destroy "$vm" &> /dev/null || echo -n "stopping vm failed (ignoring) ... "
-        virsh undefine "$vm" --remove-all-storage &> /dev/null || echo -n "deleting vm failed (ignoring) ... "
-        ok
+    virsh destroy "$vm" >/dev/null 2>&1 || echo -n "Failed to stop VM (ignoring) ... "
+    virsh undefine "$vm" --remove-all-storage >/dev/null 2>&1 || echo -n "Failed to delete VM (ignoring) ... "
+    ok
+}
+
+# Remove all relevant VMs
+for vm in $(virsh list --all --name | grep "${CLUSTER_NAME}-lb\|${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap"); do
+    remove_vm "$vm"
 done
 
-if [ -n "$VIR_NET_OCT" ]; then
-    virnet=$(virsh net-uuid "ocp-${VIR_NET_OCT}" 2> /dev/null || true)
-    if [ -n "$virnet" ]; then
-        check_if_we_can_continue "Deleting libvirt network ocp-${VIR_NET_OCT}"
-        echo -n "XXXX> Deleting libvirt network ocp-${VIR_NET_OCT}: "
-            virsh net-destroy "ocp-${VIR_NET_OCT}" > /dev/null ||  echo -n "virsh net-destroy ocp-${VIR_NET_OCT} failed (ignoring) ... "
-            virsh net-undefine "ocp-${VIR_NET_OCT}" > /dev/null || echo -n "virsh net-undefine ocp-${VIR_NET_OCT} failed (ignoring) ... "
+# Function to remove the libvirt network
+remove_network() {
+    local network="$1"
+    local uuid
+    uuid=$(virsh net-uuid "$network" 2> /dev/null || true)
+
+    if [[ -n "$uuid" ]]; then
+        check_if_we_can_continue "Deleting libvirt network $network"
+
+        echo -n "XXXX> Deleting libvirt network $network: "
+        virsh net-destroy "$network" >/dev/null 2>&1 || echo -n "Failed to destroy network (ignoring) ... "
+        virsh net-undefine "$network" >/dev/null 2>&1 || echo -n "Failed to undefine network (ignoring) ... "
         ok
     fi
-fi
+}
 
-if [ -d "${SETUP_DIR}" ]; then
-    check_if_we_can_continue "Removing directory (rm -rf) $SETUP_DIR"
-    echo -n "XXXX> Deleting (rm -rf) directory $SETUP_DIR: "
-        rm -rf "$SETUP_DIR" || echo -n "Deleting directory failed (ignoring) ... "
-    ok
-fi
+# Remove the specified libvirt network if set
+[[ -n "$VIR_NET_OCT" ]] && remove_network "ocp-${VIR_NET_OCT}"
 
-h_rec=$(cat /etc/hosts | grep -v "^#" | grep -q -s "${CLUSTER_NAME}\.${BASE_DOM}$" 2> /dev/null || true)
-if [ -n "$h_rec" ]; then
-    check_if_we_can_continue "Commenting entries in /etc/hosts for ${CLUSTER_NAME}.${BASE_DOM}"
-    echo -n "XXXX> Commenting entries in /etc/hosts for ${CLUSTER_NAME}.${BASE_DOM}: "
-        sed -i "s/\(.*\.${CLUSTER_NAME}\.${BASE_DOM}$\)/#\1/" "/etc/hosts" || echo -n "sed failed (ignoring) ... "
-    ok
-fi
+# Function to remove a directory if it exists
+remove_directory() {
+    local dir="$1"
+    if [[ -d "$dir" ]]; then
+        check_if_we_can_continue "Removing directory $dir"
 
-if [ -f "${DNS_DIR}/${CLUSTER_NAME}.conf" ]; then
-    check_if_we_can_continue "Removing file ${DNS_DIR}/${CLUSTER_NAME}.conf"
-    echo -n "XXXX> Removing file ${DNS_DIR}/${CLUSTER_NAME}.conf: "
-        rm -f "${DNS_DIR}/${CLUSTER_NAME}.conf" &> /dev/null || echo -n "removing file failed (ignoring) ... "
-    ok
-fi
+        echo -n "XXXX> Deleting directory $dir: "
+        rm -rf "$dir" || echo -n "Failed to delete directory (ignoring) ... "
+        ok
+    fi
+}
 
-if [ -f "/etc/hosts.${CLUSTER_NAME}" ]; then
-    check_if_we_can_continue "Removing file /etc/hosts.${CLUSTER_NAME}"
-    echo -n "XXXX> Removing file /etc/hosts.${CLUSTER_NAME}: "
-        rm -f "/etc/hosts.${CLUSTER_NAME}" &> /dev/null || echo -n "removing file failed (ignoring) ... "
-    ok
-fi
+# Remove setup directory if it exists
+remove_directory "$SETUP_DIR"
+
+# Function to comment out cluster-related entries in /etc/hosts
+comment_hosts_entries() {
+    local entry="$1"
+    local hosts_file="/etc/hosts"
+
+    if grep -q "${entry}" "$hosts_file"; then
+        check_if_we_can_continue "Commenting entries in $hosts_file for $entry"
+
+        echo -n "XXXX> Commenting entries in $hosts_file for $entry: "
+        sed -i "s/\(.*${entry}\)/#\1/" "$hosts_file" || echo -n "Failed to comment entries (ignoring) ... "
+        ok
+    fi
+}
+
+# Comment out /etc/hosts entries for the cluster
+comment_hosts_entries "${CLUSTER_NAME}.${BASE_DOM}$"
+
+# Function to remove a file if it exists
+remove_file() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        check_if_we_can_continue "Removing file $file"
+
+        echo -n "XXXX> Removing file $file: "
+        rm -f "$file" >/dev/null 2>&1 || echo -n "Failed to remove file (ignoring) ... "
+        ok
+    fi
+}
+
+# Remove cluster-specific DNS and hosts configuration files if they exist
+remove_file "${DNS_DIR}/${CLUSTER_NAME}.conf"
+remove_file "/etc/hosts.${CLUSTER_NAME}"

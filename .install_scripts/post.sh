@@ -1,17 +1,20 @@
 #!/bin/bash
 
-cat <<EOF > env
-# OCP4 Automated Install using https://github.com/kxr/ocp4_setup_upi_kvm
+# Create the env file to store configuration details
+create_env_file() {
+    cat <<EOF > env
+# OCP4 Automated Install Environment
+# Repository: https://github.com/kxr/ocp4_setup_upi_kvm
 # Script location: ${SDIR}
 # Script invoked with: ${SINV}
 # OpenShift version: ${OCP_NORMALIZED_VER}
 # Red Hat CoreOS version: ${RHCOS_NORMALIZED_VER}
 #
-# Script start time: $(date -d @${START_TS})
-# Script end time:   $(date -d @${END_TS})
-# Script finished in: ${TIME_TAKEN} minutes
+# Start time: $(date -d @"${START_TS}")
+# End time:   $(date -d @"${END_TS}")
+# Duration: ${TIME_TAKEN} minutes
 #
-# VARS:
+# Environment Variables:
 
 export SDIR="${SDIR}"
 export SETUP_DIR="${SETUP_DIR}"
@@ -32,6 +35,24 @@ export DNS_CMD="${DNS_CMD}"
 export DNS_SVC="${DNS_SVC}"
 
 EOF
+}
 
-cp ${SDIR}/.post_scripts/*.sh ${SETUP_DIR}/
+# Function to copy post-scripts if they exist
+copy_post_scripts() {
+    local src_dir="${SDIR}/.post_scripts"
+    local dest_dir="${SETUP_DIR}"
 
+    if [[ -d "$src_dir" ]]; then
+        cp "${src_dir}"/*.sh "$dest_dir" || {
+            echo "Warning: Failed to copy post-scripts from ${src_dir} to ${dest_dir}."
+            return 1
+        }
+        echo "Post-scripts copied from ${src_dir} to ${dest_dir}."
+    else
+        echo "Warning: No post-scripts directory found at ${src_dir}."
+    fi
+}
+
+# Execute the functions
+create_env_file
+copy_post_scripts

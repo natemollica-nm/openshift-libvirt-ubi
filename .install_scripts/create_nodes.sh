@@ -6,172 +6,163 @@ echo "#### CREATE BOOTSTRAPING RHCOS/OCP NODES ###"
 echo "############################################"
 echo 
 
-if [ -n "$RHCOS_LIVE" ]; then
-    RHCOS_I_ARG="coreos.live.rootfs_url"
-else
-    RHCOS_I_ARG="coreos.inst.image_url"
-fi
+# Set the correct rootfs or image URL argument
+RHCOS_I_ARG="coreos.${RHCOS_LIVE:+live.}rootfs_url"
+[[ -z "$RHCOS_LIVE" ]] && RHCOS_I_ARG="coreos.inst.image_url"
 
-echo -n "====> Creating Boostrap VM: "
-virt-install --name ${CLUSTER_NAME}-bootstrap \
-    --disk "${VM_DIR}/${CLUSTER_NAME}-bootstrap.qcow2,size=50" \
-    --ram ${BTS_MEM} \
-    --cpu host \
-    --vcpus ${BTS_CPU} \
-    --os-variant rhel9.0 \
-    --network network=${VIR_NET},model=virtio \
-    --noreboot \
-    --noautoconsole \
-    --location rhcos-install/ \
-    --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=http://${LBIP}:${WS_PORT}/bootstrap.ign" > /dev/null || err "Creating boostrap vm failed"; ok
-  # KERNEL_ARGS="console=ttyS0 rd.neednet=1 ip=${OPENSHIFT_HOST_IP}::${GATEWAY}:255.255.255.0:${OPENSHIFT_HOSTNAME}.${OPENSHIFT_CLUSTER}.${OPENSHIFT_DOMAIN}:enp87s0:off::[$OPENSHIFT_NODE_MAC] nameserver=${OPENSHIFT_DNS} nameserver=192.168.0.1 nameserver=8.8.8.8"
-for i in $(seq 1 ${N_MAST}); do
-    echo -n "====> Creating Master-${i} VM: "
-    virt-install --name ${CLUSTER_NAME}-master-${i} \
+# Function to create a VM with given parameters
+create_vm() {
+    local vm_name="$1"
+    local memory="$2"
+    local vcpus="$3"
+    local disk="$4"
+    local ignition_url="$5"
+
+    echo -n "====> Creating ${vm_name} VM: "
+    virt-install --name "$vm_name" \
+        --disk "$disk,size=50" \
+        --ram "$memory" \
         --cpu host \
-        --ram ${MAS_MEM} \
-        --vcpus ${MAS_CPU} \
-        --location rhcos-install/ \
+        --vcpus "$vcpus" \
         --os-variant rhel9.0 \
-        --disk "${VM_DIR}/${CLUSTER_NAME}-master-${i}.qcow2,size=50" \
-        --network network=${VIR_NET},model=virtio \
+        --network network="${VIR_NET}",model=virtio \
         --noreboot \
         --noautoconsole \
-        --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=http://${LBIP}:${WS_PORT}/master.ign" > /dev/null || err "Creating master-${i} vm failed "; ok
+        --location rhcos-install/ \
+        --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}" > /dev/null || err "Failed to create VM: ${vm_name}"
+    ok
+}
+
+# Create Bootstrap VM
+create_vm "${CLUSTER_NAME}-bootstrap" "$BTS_MEM" "$BTS_CPU" "${VM_DIR}/${CLUSTER_NAME}-bootstrap.qcow2" "http://${LBIP}:${WS_PORT}/bootstrap.ign"
+
+# Create Master VMs
+for i in $(seq 1 "${N_MAST}"); do
+    create_vm "${CLUSTER_NAME}-master-${i}" "$MAS_MEM" "$MAS_CPU" "${VM_DIR}/${CLUSTER_NAME}-master-${i}.qcow2" "http://${LBIP}:${WS_PORT}/master.ign"
 done
 
-for i in $(seq 1 ${N_WORK}); do
-    echo -n "====> Creating Worker-${i} VM: "
-      virt-install --name ${CLUSTER_NAME}-worker-${i} \
-          --disk "${VM_DIR}/${CLUSTER_NAME}-worker-${i}.qcow2,size=50" \
-          --ram ${WOR_MEM} \
-          --cpu host \
-          --vcpus ${WOR_CPU} \
-          --os-variant rhel9.0 \
-          --network network=${VIR_NET},model=virtio \
-          --noreboot \
-          --noautoconsole \
-          --location rhcos-install/ \
-          --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=http://${LBIP}:${WS_PORT}/worker.ign" > /dev/null || err "Creating worker-${i} vm failed "; ok
+# Create Worker VMs
+for i in $(seq 1 "${N_WORK}"); do
+    create_vm "${CLUSTER_NAME}-worker-${i}" "$WOR_MEM" "$WOR_CPU" "${VM_DIR}/${CLUSTER_NAME}-worker-${i}.qcow2" "http://${LBIP}:${WS_PORT}/worker.ign"
 done
 
-echo "====> Waiting for RHCOS Installation to finish: "
-while rvms=$(virsh list --name --state-running | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
-    sleep 15
-    echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
-done
-
-echo -n "====> Marking ${CLUSTER_NAME}.${BASE_DOM} as local in dnsmasq: "
-echo "local=/${CLUSTER_NAME}.${BASE_DOM}/" >> ${DNS_DIR}/${CLUSTER_NAME}.conf || err "Updating ${DNS_DIR}/${CLUSTER_NAME}.conf failed"; ok
-
-echo -n "====> Starting Bootstrap VM: "
-virsh start ${CLUSTER_NAME}-bootstrap > /dev/null || err "virsh start ${CLUSTER_NAME}-bootstrap failed"; ok
-
-for i in $(seq 1 ${N_MAST}); do
-    echo -n "====> Starting Master-${i} VM: "
-    virsh start ${CLUSTER_NAME}-master-${i} > /dev/null || err "virsh start ${CLUSTER_NAME}-master-${i} failed"; ok
-done
-
-for i in $(seq 1 ${N_WORK}); do
-    echo -n "====> Starting Worker-${i} VMs: "
-    virsh start ${CLUSTER_NAME}-worker-${i} > /dev/null || err "virsh start ${CLUSTER_NAME}-worker-${i} failed"; ok
-done
-
-echo -n "====> Waiting for Bootstrap to obtain IP address: "
-while true; do
-    sleep 5
-    BSIP=$(virsh domifaddr "${CLUSTER_NAME}-bootstrap" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
-    test "$?" -eq "0" -a -n "$BSIP"  && { echo "$BSIP"; break; }
-done
-MAC=$(virsh domifaddr "${CLUSTER_NAME}-bootstrap" | grep ipv4 | head -n1 | awk '{print $2}')
-
-echo -n "  ==> Adding DHCP reservation: "
-virsh net-update ${VIR_NET} add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$BSIP'/>" --live --config > /dev/null || \
-    err "Adding DHCP reservation failed"; ok
-
-echo -n "  ==> Adding hosts entry in /etc/hosts.${CLUSTER_NAME}: "
-echo "$BSIP bootstrap.${CLUSTER_NAME}.${BASE_DOM}" >> /etc/hosts.${CLUSTER_NAME} || err "failed"; ok
-
-for i in $(seq 1 ${N_MAST}); do
-    echo -n "====> Waiting for Master-$i to obtain IP address: "
-        while true
-        do
-            sleep 5
-            IP=$(virsh domifaddr "${CLUSTER_NAME}-master-${i}" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
-            test "$?" -eq "0" -a -n "$IP"  && { echo "$IP"; break; }
-        done
-        MAC=$(virsh domifaddr "${CLUSTER_NAME}-master-${i}" | grep ipv4 | head -n1 | awk '{print $2}')
-
-    echo -n "  ==> Adding DHCP reservation: "
-    virsh net-update ${VIR_NET} add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$IP'/>" --live --config > /dev/null || \
-    err "Adding DHCP reservation failed"; ok
-
-    echo -n "  ==> Adding hosts entry in /etc/hosts.${CLUSTER_NAME}: "
-    echo "$IP master-${i}.${CLUSTER_NAME}.${BASE_DOM}" \
-         "etcd-$((i-1)).${CLUSTER_NAME}.${BASE_DOM}" >> /etc/hosts.${CLUSTER_NAME} || err "failed"; ok
-
-    echo -n "  ==> Adding SRV record in dnsmasq: "
-    echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOM},etcd-$((i-1)).${CLUSTER_NAME}.${BASE_DOM},2380,0,10" >> ${DNS_DIR}/${CLUSTER_NAME}.conf || \
-        err "failed"; ok
-done
-
-for i in $(seq 1 ${N_WORK}); do
-    echo -n "====> Waiting for Worker-$i to obtain IP address: "
-    while true
-    do
-        sleep 5
-        IP=$(virsh domifaddr "${CLUSTER_NAME}-worker-${i}" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
-        test "$?" -eq "0" -a -n "$IP"  && { echo "$IP"; break; }
+# Function to wait for VM installations to complete
+wait_for_installation() {
+    echo "====> Waiting for RHCOS installation to finish: "
+    while rvms=$(virsh list --name --state-running | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
+        sleep 15
+        echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
     done
-    MAC=$(virsh domifaddr "${CLUSTER_NAME}-worker-${i}" | grep ipv4 | head -n1 | awk '{print $2}')
+}
 
-    echo -n "  ==> Adding DHCP reservation: "
-    virsh net-update ${VIR_NET} add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$IP'/>" --live --config > /dev/null || \
-    err "Adding DHCP reservation failed"; ok
+# Function to start a VM
+start_vm() {
+    local vm_name="$1"
+    echo -n "====> Starting ${vm_name} VM: "
+    virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
+    ok
+}
 
-    echo -n "  ==> Adding hosts entry in /etc/hosts.${CLUSTER_NAME}: "
-    echo "$IP worker-${i}.${CLUSTER_NAME}.${BASE_DOM}" >> /etc/hosts.${CLUSTER_NAME} || err "failed"; ok
+# Function to set up DHCP reservation for a VM
+setup_dhcp_reservation() {
+    local vm_name="$1"
+    local ip_var="$2"
+
+    echo -n "====> Waiting for ${vm_name} to obtain IP address: "
+    while true; do
+        sleep 5
+        IP=$(virsh domifaddr "$vm_name" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
+        [[ -n "$IP" ]] && { echo "$IP"; break; }
+    done
+    MAC=$(virsh domifaddr "$vm_name" | grep ipv4 | head -n1 | awk '{print $2}')
+    eval "$ip_var='$IP'"
+
+    echo -n "  ==> Adding DHCP reservation for ${vm_name}: "
+    virsh net-update "${VIR_NET}" add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$IP'/>" --live --config > /dev/null || \
+        err "Failed to add DHCP reservation for ${vm_name}"
+    ok
+}
+
+# Start and configure DHCP for Bootstrap, Masters, and Workers
+start_vm "${CLUSTER_NAME}-bootstrap"
+setup_dhcp_reservation "${CLUSTER_NAME}-bootstrap" BSIP
+
+for i in $(seq 1 "${N_MAST}"); do
+    start_vm "${CLUSTER_NAME}-master-${i}"
+    setup_dhcp_reservation "${CLUSTER_NAME}-master-${i}" "MASTER_IP_${i}"
+    echo -n "  ==> Adding SRV record in dnsmasq for Master-${i}: "
+    echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOM},etcd-$((i-1)).${CLUSTER_NAME}.${BASE_DOM},2380,0,10" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || \
+        err "Failed to add SRV record for Master-${i}"
+    ok
 done
 
-echo -n '====> Adding wild-card (*.apps) dns record in dnsmasq: '
-echo "address=/apps.${CLUSTER_NAME}.${BASE_DOM}/${LBIP}" >> ${DNS_DIR}/${CLUSTER_NAME}.conf || err "failed"; ok
+for i in $(seq 1 "${N_WORK}"); do
+    start_vm "${CLUSTER_NAME}-worker-${i}"
+    setup_dhcp_reservation "${CLUSTER_NAME}-worker-${i}" "WORKER_IP_${i}"
+done
 
-echo -n "====> Restarting libvirt and dnsmasq: "
-systemctl restart libvirtd || err "systemctl restart libvirtd failed"
-systemctl $DNS_CMD $DNS_SVC || err "systemctl $DNS_CMD $DNS_SVC"; ok
+# Add DNS and hosts entries
+update_dns_hosts() {
+    echo -n "====> Marking ${CLUSTER_NAME}.${BASE_DOM} as local in dnsmasq: "
+    echo "local=/${CLUSTER_NAME}.${BASE_DOM}/" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Updating dnsmasq configuration failed"
+    ok
 
+    echo -n '====> Adding wildcard (*.apps) DNS record in dnsmasq: '
+    echo "address=/apps.${CLUSTER_NAME}.${BASE_DOM}/${LBIP}" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Failed to add wildcard DNS record"
+    ok
+}
 
-echo -n "====> Configuring haproxy in LB VM: "
-ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" "semanage port -a -t http_port_t -p tcp 6443" || \
-    err "semanage port -a -t http_port_t -p tcp 6443 failed" && echo -n "."
-ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" "semanage port -a -t http_port_t -p tcp 22623" || \
-    err "semanage port -a -t http_port_t -p tcp 22623 failed" && echo -n "."
-ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" "systemctl start haproxy" || \
-    err "systemctl start haproxy failed" && echo -n "."
-ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" "systemctl -q enable haproxy" || \
-    err "systemctl enable haproxy failed" && echo -n "."
-ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" "systemctl -q is-active haproxy" || \
-    err "haproxy not working as expected" && echo -n "."
-ok
+update_dns_hosts
 
+# Restart services to apply the changes
+restart_services() {
+    echo -n "====> Restarting libvirt and DNS services: "
+    systemctl restart libvirtd || err "Failed to restart libvirtd"
+    systemctl "$DNS_CMD" "$DNS_SVC" || err "Failed to restart DNS service: $DNS_SVC"
+    ok
+}
 
-if [ "$AUTOSTART_VMS" == "yes" ]; then
-    echo -n "====> Setting VMs to autostart: "
-    for vm in $(virsh list --all --name --no-autostart | grep "^${CLUSTER_NAME}-"); do
-        virsh autostart "${vm}" &> /dev/null
-        echo -n "."
+restart_services
+
+# Configure HAProxy on Load Balancer
+configure_haproxy() {
+    echo -n "====> Configuring HAProxy on Load Balancer VM: "
+    ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" <<EOF
+        semanage port -a -t http_port_t -p tcp 6443 || true
+        semanage port -a -t http_port_t -p tcp 22623 || true
+        systemctl start haproxy || err "Failed to start haproxy"
+        systemctl -q enable haproxy
+        systemctl -q is-active haproxy || err "HAProxy is not active"
+EOF
+    ok
+}
+
+configure_haproxy
+
+# Function to set autostart for VMs
+set_vm_autostart() {
+    if [[ "$AUTOSTART_VMS" == "yes" ]]; then
+        echo -n "====> Setting VMs to autostart: "
+        for vm in $(virsh list --all --name --no-autostart | grep "^${CLUSTER_NAME}-"); do
+            virsh autostart "$vm" &> /dev/null
+            echo -n "."
+        done
+        ok
+    fi
+}
+
+set_vm_autostart
+
+# Function to wait for SSH access to Bootstrap VM
+wait_for_ssh_bootstrap() {
+    echo -n "====> Waiting for SSH access on Bootstrap VM: "
+    ssh-keygen -R "bootstrap.${CLUSTER_NAME}.${BASE_DOM}" &> /dev/null || true
+    ssh-keygen -R "$BSIP" &> /dev/null || true
+    while true; do
+        sleep 1
+        ssh -i sshkey -o StrictHostKeyChecking=no "core@bootstrap.${CLUSTER_NAME}.${BASE_DOM}" true &> /dev/null && break
     done
     ok
-fi
+}
 
-
-echo -n "====> Waiting for SSH access on Boostrap VM: "
-ssh-keygen -R bootstrap.${CLUSTER_NAME}.${BASE_DOM} &> /dev/null || true
-ssh-keygen -R $BSIP  &> /dev/null || true
-while true; do
-    sleep 1
-    ssh -i sshkey -o StrictHostKeyChecking=no core@bootstrap.${CLUSTER_NAME}.${BASE_DOM} true &> /dev/null || continue
-    break
-done
-ssh -i sshkey "core@bootstrap.${CLUSTER_NAME}.${BASE_DOM}" true || err "SSH to lb.${CLUSTER_NAME}.${BASE_DOM} failed"; ok
-
+wait_for_ssh_bootstrap

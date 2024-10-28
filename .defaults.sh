@@ -52,7 +52,7 @@ export DEF_LIBVIRT_NET="default"
 export VIR_NET_OCT=""
 
 # -c, --cluster-name NAME
-export CLUSTER_NAME="ocp4"
+export CLUSTER_NAME="ocp-libvirt"
 
 # -d, --cluster-domain DOMAIN
 export BASE_DOM="local"
@@ -68,10 +68,10 @@ export VM_DIR="/var/lib/libvirt/images"
 export SETUP_DIR=""
 
 # -x, --cache-dir DIR
-export CACHE_DIR="/root/ocp4_downloads"
+export CACHE_DIR="/root/ocp/download-cache"
 
 # -p, --pull-secret FILE
-export PULL_SEC_F="/root/pull-secret"
+export PULL_SEC_F="${HOME}/pull-secret"
 
 # --ssh-pub-key-file
 # By default a new ssh key pair is generated in $SETUP_DIR
@@ -79,7 +79,7 @@ export SSH_PUB_KEY_FILE=""
 
 
 # Below are some "flags" which by default are set to "no"
-# and can be overriden by their respective switches.
+# and can be overridden by their respective switches.
 # If you set them to "yes" here, you won't need pass those
 # switches everytime you run the script.
 

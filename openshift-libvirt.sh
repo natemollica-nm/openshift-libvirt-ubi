@@ -1,4 +1,5 @@
 #!/bin/bash
+# OpenShift UPI installation script
 # https://github.com/kxr/ocp4_setup_upi_kvm
 
 set -e
@@ -8,6 +9,10 @@ export SINV="${0} ${@}"
 export SDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export COLS="$(stty size | awk '{print $2}')"
 
+# 'source' integrates scripts as part of the main environment without
+#  needing separate processes or subshells, providing an effective
+#  structure for complex workflows like the OpenShift UPI installation.
+
 # Utility function err,ok,download etc.
 source ${SDIR}/.install_scripts/utils.sh
 
@@ -16,7 +21,7 @@ test "$(whoami)" = root || err "Not running as root"
 
 # Process Arguments
 source ${SDIR}/.defaults.sh
-source ${SDIR}/.install_scripts/process_args.sh ${@}
+source ${SDIR}/.install_scripts/process_args.sh "${@}"
 
 # Destroy
 if [ "${DESTROY}" == "yes" ]; then
@@ -48,7 +53,7 @@ source ${SDIR}/.install_scripts/create_lb.sh
 # Create Cluster Nodes
 source ${SDIR}/.install_scripts/create_nodes.sh
 
-# OpenShift Bootstraping
+# OpenShift Bootstrapping
 source ${SDIR}/.install_scripts/bootstrap.sh
 
 # OpenShift ClusterVersion

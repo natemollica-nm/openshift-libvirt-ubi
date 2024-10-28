@@ -72,8 +72,29 @@ check_pull_secret() {
     ok
 }
 
+# Function to enable/start libvirt modular daemons
+start_libvirt_services() {
+    local service
+    for service in qemu interface network nodedev nwfilter secret storage; do
+        echo -n "====> Unmasking virt${service} socket: "
+        systemctl unmask virt${service}d.service; systemctl unmask virt${service}d{,-ro,-admin}.socket || \
+            err "virt${service}d is not running nor enabled"
+        ok
+        echo -n "====> Enabling virt${service} socket: "
+        systemctl enable virt${service}d.service; systemctl enable virt${service}d{,-ro,-admin}.socket || \
+            err "virt${service}d is not running nor enabled"
+        ok
+        echo -n "====> Starting virt${service} socket: "
+        systemctl start virt${service}d{,-ro,-admin}.socket || \
+            err "virt${service}d is not running nor enabled"
+        ok
+    done
+}
+
 # Function to check and restart libvirt services
 check_libvirt_services() {
+    local service
+
     for service in qemu interface network nodedev nwfilter secret storage; do
         echo -n "====> Checking if virt${service}d is running or enabled: "
         systemctl -q is-active "virt${service}d" || systemctl -q is-enabled "virt${service}d" || \
@@ -149,6 +170,7 @@ check_dns_and_hosts() {
 check_dependencies
 check_setup_directory
 check_pull_secret
+start_libvirt_services
 check_libvirt_services
 check_existing_vms
 check_dns_service

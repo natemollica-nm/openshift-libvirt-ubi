@@ -91,10 +91,12 @@ check_url "CentOS cloud image" "$LB_IMG_URL" "$LB_IMG"
 # Display detected versions
 echo
 echo "      Red Hat OpenShift Version = $OCP_NORMALIZED_VER"
+echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER"
 echo "                         Client = $CLIENT_URL"
 echo "                      Installer = $INSTALLER_URL"
 echo "                    RHCOS Image = $IMAGE_URL"
-echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER"
+echo "                   Kernel Image = $IMAGE_URL"
+echo "                Initramfs Image = $IMAGE_URL"
 echo
 
 # Prompt user to continue

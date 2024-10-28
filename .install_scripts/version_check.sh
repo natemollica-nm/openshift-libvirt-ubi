@@ -24,7 +24,7 @@ lookup_release_file() {
     local file
 
     file=$(curl -N --fail -qs "$url" | grep -m1 "$pattern" | sed 's/.*href="\(.*\)">.*/\1/')
-    test -n "$file" && ok "$file" || err "No ${description} found at ${url}"
+    test -n "$file" || err "No ${description} found at ${url}"
     echo "$file"
 }
 

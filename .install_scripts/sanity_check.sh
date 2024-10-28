@@ -6,17 +6,47 @@ echo "### DEPENDENCIES & SANITY CHECKS ###"
 echo "####################################"
 echo
 
+# Dependency mapping hashtable (command => install method)
+declare -A dependencies=(
+    [virsh]="dnf install -y libvirt"
+    [virt-install]="dnf install -y libvirt"
+    [virt-customize]="yum install -y libguestfs-tools-c"
+    [systemctl]="dnf install -y systemd"
+    [dig]="dnf install -y bind-utils"
+    [wget]="dnf install -y wget"
+)
+
+# Function to attempt installation of missing dependencies
+install_dependency() {
+    local cmd="$1"
+    local install_cmd="${dependencies[$cmd]}"
+
+    echo "Attempting to install missing dependency: $cmd"
+    if ! $install_cmd; then
+        err "Failed to install $cmd using command: $install_cmd. Please install it manually."
+    else
+        ok "$cmd installed successfully."
+    fi
+}
+
 # Function to check for required executables
 check_dependencies() {
-    echo -n "====> Checking dependencies: "
-    for cmd in virsh virt-install virt-customize systemctl dig wget; do
-        command -v "$cmd" >/dev/null 2>&1 || err "Executable $cmd not found"
+    echo "====> Checking dependencies: "
+    for cmd in "${!dependencies[@]}"; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            echo "Dependency $cmd not found."
+            install_dependency "$cmd"
+        else
+            ok "$cmd found."
+        fi
     done
 
     # Verify libvirt_driver_network.so existence
-    test -n "$(find /usr -type f -name libvirt_driver_network.so 2> /dev/null)" || \
-        err "libvirt_driver_network.so not found"
-    ok
+    if ! find /usr -type f -name libvirt_driver_network.so >/dev/null 2>&1; then
+        err "libvirt_driver_network.so not found. Please install the libvirt package."
+    else
+        ok "libvirt_driver_network.so found."
+    fi
 }
 
 # Function to check if setup directory already exists

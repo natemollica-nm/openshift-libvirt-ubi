@@ -46,7 +46,7 @@ download() {
             if [[ -f "${CACHE_DIR}/${file}" ]]; then
                 echo "(reusing cached file ${file})"
             else
-                if timeout 10 curl -s --head --fail "${url}" > /dev/null; then
+                if timeout 10 curl -s --head --fail "${url}" >/dev/null; then
                     ok "URL reachable"
                 else
                     err "URL ${url} not reachable"

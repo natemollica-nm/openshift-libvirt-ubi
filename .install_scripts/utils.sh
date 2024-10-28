@@ -4,6 +4,7 @@
 err() {
     echo
     echo -e "\e[97m\e[101m[ERROR]\e[0m ${1}"; shift
+    echo
     for msg in "$@"; do
         echo "    $msg"
     done

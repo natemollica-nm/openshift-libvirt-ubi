@@ -51,11 +51,12 @@ OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/')
 
 # Determine RHCOS release version
 if [[ -z "$RHCOS_VERSION" ]]; then
-    RHCOS_VER="${OCP_VER}"
+    RHCOS_VER="$OCP_VER"
     RHCOS_MINOR="latest"
 else
     RHCOS_VER=$(echo "$RHCOS_VERSION" | cut -d '.' -f1-2)
-    RHCOS_MINOR=$(echo "$RHCOS_VERSION" | cut -d '.' -f3 || echo "latest")
+    RHCOS_MINOR=$(echo "$RHCOS_VERSION" | cut -d '.' -f3-)
+    RHCOS_MINOR="${RHCOS_MINOR:-latest}"
 fi
 urldir="${RHCOS_VER}/${RHCOS_MINOR}"
 

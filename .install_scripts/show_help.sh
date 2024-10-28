@@ -1,5 +1,6 @@
 #!/bin/bash
-echo COLS=$COLUMNS
+COLS=${COLUMNS}
+echo "COLS=${COLUMNS}"
 cat <<EOF | fmt -s -w "${COLS}"
 
 Usage: ${0} [OPTIONS]

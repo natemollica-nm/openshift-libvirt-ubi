@@ -142,21 +142,21 @@ Note: The default values for all these options can be changed in the .defaults.s
 Examples:
 
     # Deploy OpenShift 4.3.12 cluster
-    ./ocp4_setup_upi_kvm.sh --ocp-version 4.3.12
+    ${0} --ocp-version 4.3.12
 
     # Deploy OpenShift 4.3.12 cluster with RHCOS 4.3.0
-    ./ocp4_setup_upi_kvm.sh --ocp-version 4.3.12 --rhcos-version 4.3.0
+    ${0} --ocp-version 4.3.12 --rhcos-version 4.3.0
 
     # Deploy latest OpenShift version with pull secret from a custom location
-    ./ocp4_setup_upi_kvm.sh --pull-secret /home/knaeem/Downloads/pull-secret --ocp-version latest
+    ${0} --pull-secret /home/knaeem/Downloads/pull-secret --ocp-version latest
 
     # Deploy OpenShift 4.2.latest with custom cluster name and domain
-    ./ocp4_setup_upi_kvm.sh --cluster-name ocp43 --cluster-domain lab.test.com --ocp-version 4.2.latest
+    ${0} --cluster-name ocp43 --cluster-domain lab.test.com --ocp-version 4.2.latest
 
     # Deploy OpenShift 4.2.stable on new libvirt network (192.168.155.0/24)
-    ./ocp4_setup_upi_kvm.sh --ocp-version 4.2.stable --libvirt-oct 155
+    ${0} --ocp-version 4.2.stable --libvirt-oct 155
 
     # Destory the already installed cluster
-    ./ocp4_setup_upi_kvm.sh --cluster-name ocp43 --cluster-domain lab.test.com --destroy
+    ${0} --cluster-name ocp43 --cluster-domain lab.test.com --destroy
 
 EOF

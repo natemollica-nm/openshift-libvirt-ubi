@@ -95,8 +95,8 @@ echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER"
 echo "                         Client = $CLIENT_URL"
 echo "                      Installer = $INSTALLER_URL"
 echo "                    RHCOS Image = $IMAGE_URL"
-echo "                   Kernel Image = $IMAGE_URL"
-echo "                Initramfs Image = $IMAGE_URL"
+echo "                   Kernel Image = $KERNEL_URL"
+echo "                Initramfs Image = $INITRAMFS_URL"
 echo
 
 # Prompt user to continue

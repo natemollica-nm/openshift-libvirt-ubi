@@ -178,7 +178,7 @@ check_dns_and_hosts() {
 check_dependencies
 check_setup_directory
 check_pull_secret
-start_libvirt_services
+# start_libvirt_services
 check_libvirt_services
 check_existing_vms
 check_dns_service

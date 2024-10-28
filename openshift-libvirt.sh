@@ -37,7 +37,6 @@ fi
 
 ## https://www.libguestfs.org/guestfs.3.html#backend
 ## Find the socket: ss -lx | grep libvirt
-# export LIBGUESTFS_BACKEND=qemu+unix:///session?socket=/run/libvirt/virtqemud-sock
 export LIBGUESTFS_BACKEND=direct
 
 # Dependencies & Sanity checks

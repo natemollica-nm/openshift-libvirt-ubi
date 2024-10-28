@@ -36,7 +36,8 @@ if [ "${DESTROY}" == "yes" ]; then
 fi
 
 ## https://www.libguestfs.org/guestfs.3.html#backend
-#export LIBGUESTFS_BACKEND=direct
+## Find the socket: virsh uri
+export LIBGUESTFS_PATH=qemu:///session
 
 # Dependencies & Sanity checks
 source ${SDIR}/.install_scripts/sanity_check.sh

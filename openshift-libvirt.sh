@@ -2,6 +2,7 @@
 # https://github.com/kxr/ocp4_setup_upi_kvm
 
 set -e
+
 export START_TS=$(date +%s)
 export SINV="${0} ${@}"
 export SDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -23,8 +24,8 @@ if [ "${DESTROY}" == "yes" ]; then
     exit 0
 fi
 
-# https://www.libguestfs.org/guestfs.3.html#backend
-export LIBGUESTFS_BACKEND=direct
+## https://www.libguestfs.org/guestfs.3.html#backend
+#export LIBGUESTFS_BACKEND=direct
 
 # Dependencies & Sanity checks
 source ${SDIR}/.install_scripts/sanity_check.sh

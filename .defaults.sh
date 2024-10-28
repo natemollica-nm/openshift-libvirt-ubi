@@ -99,7 +99,6 @@ export DESTROY="no"
 # -y, --yes
 export YES="no"
 
-
 export OCP_MIRROR="https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 export RHCOS_MIRROR="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos"
 export LB_IMG_URL="https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20231002.0.x86_64.qcow2"

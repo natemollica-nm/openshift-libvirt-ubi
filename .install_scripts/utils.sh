@@ -10,8 +10,10 @@ err() {
     echo; exit 1;
 }
 
+# shellcheck disable=2120
 ok() {
-    test -z "$1" && echo " ok" || echo " ${1}"
+    local msg="${1}"
+    [ -z "${msg}" ] && echo " ok" || echo " ${msg}"
 }
 
 check_if_we_can_continue() {
@@ -47,7 +49,7 @@ download() {
             echo "(reusing cached file ${file})"
         else
             echo
-            wget ${url} -O "${CACHE_DIR}/${file}.part" && mv "${CACHE_DIR}/${file}.part" "${CACHE_DIR}/${file}"
+            wget "${url}" -O "${CACHE_DIR}/${file}.part" && mv "${CACHE_DIR}/${file}.part" "${CACHE_DIR}/${file}"
             test -f "${CACHE_DIR}/${file}" || err "Error dowloading ${file} from ${url}"
         fi
     else

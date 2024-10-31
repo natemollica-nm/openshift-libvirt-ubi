@@ -24,7 +24,6 @@ customize_lb_image() {
     virt-customize -a "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
         --uninstall cloud-init \
         --ssh-inject root:file:${SSH_PUB_KEY_FILE} \
-        --selinux-relabel \
         --install haproxy,bind-utils \
         --copy-in install_dir/bootstrap.ign:/opt/ \
         --copy-in install_dir/master.ign:/opt/ \

@@ -40,7 +40,7 @@ export BTS_MEM="16000"
 export LB_CPU="4"
 
 # --lb-mem SIZE(MB)
-export LB_MEM="1536"
+export LB_MEM="16000"
 
 # loadBalancer VM python WebServer port
 export WS_PORT="1234"

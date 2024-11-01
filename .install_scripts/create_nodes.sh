@@ -137,12 +137,23 @@ restart_services
 # Configure HAProxy on Load Balancer
 configure_haproxy() {
     echo -n "====> Configuring HAProxy on Load Balancer VM: "
-    ssh -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" <<EOF
+    ssh -t -i sshkey "lb.${CLUSTER_NAME}.${BASE_DOM}" <<'EOF'
+        # Add necessary ports to SELinux configuration for HAProxy
         semanage port -a -t http_port_t -p tcp 6443 || true
         semanage port -a -t http_port_t -p tcp 22623 || true
-        systemctl start haproxy || err "Failed to start haproxy"
+
+        # Try to start and enable HAProxy, with error handling for any failure
+        if ! systemctl start haproxy; then
+            echo "Failed to start haproxy" >&2
+            exit 1
+        fi
         systemctl -q enable haproxy
-        systemctl -q is-active haproxy || err "HAProxy is not active"
+
+        # Confirm HAProxy is active, otherwise, print an error
+        if ! systemctl -q is-active haproxy; then
+            echo "HAProxy is not active" >&2
+            exit 1
+        fi
 EOF
     ok
 }

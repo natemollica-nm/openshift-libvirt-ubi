@@ -49,6 +49,7 @@ done
 # Function to wait for VM installations to complete
 wait_for_installation() {
     echo "====> Waiting for RHCOS installation to finish: "
+    local rvms
     while rvms=$(virsh list --name --state-running | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
         sleep 15
         echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
@@ -69,13 +70,15 @@ setup_dhcp_reservation() {
     local ip_var="$2"
 
     echo -n "====> Waiting for ${vm_name} to obtain IP address: "
+    local IP
+    local MAC
     while true; do
         sleep 5
-        IP=$(virsh domifaddr "$vm_name" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
-        [[ -n "$IP" ]] && { echo "$IP"; break; }
+        IP=$(virsh domifaddr "${vm_name}" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
+        [[ -n "${IP}" ]] && { echo "${IP}"; break; }
     done
     MAC=$(virsh domifaddr "$vm_name" | grep ipv4 | head -n1 | awk '{print $2}')
-    eval "$ip_var='$IP'"
+    eval "${ip_var}='${IP}'"
 
     echo -n "  ==> Adding DHCP reservation for ${vm_name}: "
     virsh net-update "${VIR_NET}" add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$IP'/>" --live --config > /dev/null || \
@@ -116,10 +119,12 @@ update_dns_hosts
 
 # Restart services to apply the changes
 restart_services() {
-    echo -n "====> Restarting libvirt and DNS services: "
-    systemctl restart libvirtd || err "Failed to restart libvirtd"
-    systemctl "$DNS_CMD" "$DNS_SVC" || err "Failed to restart DNS service: $DNS_SVC"
-    ok
+    local service
+    echo -n "====> Restarting libvirt modular daemons and DNS services: "
+    for service in qemu interface network nodedev nwfilter secret storage log; do
+        systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
+        ok
+    done
 }
 
 restart_services
@@ -143,6 +148,7 @@ configure_haproxy
 set_vm_autostart() {
     if [[ "$AUTOSTART_VMS" == "yes" ]]; then
         echo -n "====> Setting VMs to autostart: "
+        local vm
         for vm in $(virsh list --all --name --no-autostart | grep "^${CLUSTER_NAME}-"); do
             virsh autostart "$vm" &> /dev/null
             echo -n "."
@@ -157,7 +163,7 @@ set_vm_autostart
 wait_for_ssh_bootstrap() {
     echo -n "====> Waiting for SSH access on Bootstrap VM: "
     ssh-keygen -R "bootstrap.${CLUSTER_NAME}.${BASE_DOM}" &> /dev/null || true
-    ssh-keygen -R "$BSIP" &> /dev/null || true
+    ssh-keygen -R "${BSIP}" &> /dev/null || true
     while true; do
         sleep 1
         ssh -i sshkey -o StrictHostKeyChecking=no "core@bootstrap.${CLUSTER_NAME}.${BASE_DOM}" true &> /dev/null && break

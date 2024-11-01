@@ -150,7 +150,7 @@ frontend ${CLUSTER_NAME}-api
 backend master-api
   balance source
   server bootstrap bootstrap.${CLUSTER_NAME}.${BASE_DOM}:6443 check" > haproxy.cfg
-
+    local i
     for i in $(seq 1 "${N_MAST}"); do
         echo "  server master-${i} master-${i}.${CLUSTER_NAME}.${BASE_DOM}:6443 check" >> haproxy.cfg
     done

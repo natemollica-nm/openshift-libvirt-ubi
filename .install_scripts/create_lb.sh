@@ -21,7 +21,8 @@ download_and_prepare_lb_image() {
 # Function to customize the VM image
 customize_lb_image() {
     echo "====> Setting up Load Balancer VM image: "
-    virt-customize -a "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
+    virt-customize \
+        --add "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
         --uninstall cloud-init \
         --ssh-inject root:file:${SSH_PUB_KEY_FILE} \
         --install haproxy,bind-utils \
@@ -62,6 +63,7 @@ start_lb_vm() {
     echo -n "====> Waiting for Load Balancer VM to obtain IP address: "
     while true; do
         sleep 5
+        export LBIP
         LBIP=$(virsh domifaddr "${CLUSTER_NAME}-lb" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
         if [[ -n "$LBIP" ]]; then
             echo "$LBIP"

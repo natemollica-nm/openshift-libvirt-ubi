@@ -1,5 +1,6 @@
 #!/bin/bash
-
+export LIBVIRT_BRIDGE
+export LIBVIRT_GWIP
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
@@ -162,6 +163,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-test -z "${SETUP_DIR}" && export SETUP_DIR="/root/ocp4_cluster_${CLUSTER_NAME}" || true
+test -z "${SETUP_DIR}" && export SETUP_DIR="/root/${CLUSTER_NAME}-cluster" || true
 test -n "$VIR_NET" -a -n "$VIR_NET_OCT" && err "Specify either -n or -N" || true
 test -z "$VIR_NET" -a -z "$VIR_NET_OCT" && export VIR_NET="${DEF_LIBVIRT_NET}" || true

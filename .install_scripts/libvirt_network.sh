@@ -69,7 +69,7 @@ if [[ -n "$VIR_NET_OCT" ]]; then
 fi
 
 # Retrieve the bridge name and gateway IP for the network
-echo -n "====> Retrieving network bridge and gateway IP: "
-export LIBVIRT_BRIDGE=$(virsh net-info "${VIR_NET}" | awk '/^Bridge:/ {print $2}')
-export LIBVIRT_GWIP=$(ip -f inet addr show "${LIBVIRT_BRIDGE}" | awk '/inet / {print $2}' | cut -d '/' -f1)
+echo -n "====> Retrieving network bridge and gateway IP -- "
+LIBVIRT_BRIDGE=$(virsh net-info "${VIR_NET}" | awk '/^Bridge:/ {print $2}')
+LIBVIRT_GWIP=$(ip -f inet addr show "${LIBVIRT_BRIDGE}" | awk '/inet / {print $2}' | cut -d '/' -f1)
 ok "Bridge: ${LIBVIRT_BRIDGE}, Gateway IP: ${LIBVIRT_GWIP}"

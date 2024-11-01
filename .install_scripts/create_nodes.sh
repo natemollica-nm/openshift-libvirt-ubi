@@ -102,6 +102,18 @@ update_dns_hosts() {
 
 update_dns_hosts
 
+# Restart services to apply the changes
+restart_services() {
+    local service
+    echo -n "====> Restarting libvirt modular daemons and DNS services: "
+    for service in qemu interface network nodedev nwfilter secret storage log; do
+        systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
+        ok
+    done
+}
+
+restart_services
+
 # Function to verify DNS resolution for a VM
 verify_dns_resolution() {
     local vm_name="$1"
@@ -130,18 +142,6 @@ done
 for i in $(seq 1 "${N_WORK}"); do
     verify_dns_resolution "${CLUSTER_NAME}-worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
 done
-
-# Restart services to apply the changes
-restart_services() {
-    local service
-    echo -n "====> Restarting libvirt modular daemons and DNS services: "
-    for service in qemu interface network nodedev nwfilter secret storage log; do
-        systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
-        ok
-    done
-}
-
-restart_services
 
 # Configure HAProxy on Load Balancer
 configure_haproxy() {

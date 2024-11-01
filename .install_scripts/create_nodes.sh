@@ -135,12 +135,12 @@ verify_dns_resolution() {
 }
 
 # Verify DNS resolution for each VM
-verify_dns_resolution "${CLUSTER_NAME}-bootstrap" "${ip_addresses[${CLUSTER_NAME}-bootstrap]}"
+verify_dns_resolution "bootstrap" "${ip_addresses[${CLUSTER_NAME}-bootstrap]}"
 for i in $(seq 1 "${N_MAST}"); do
-    verify_dns_resolution "${CLUSTER_NAME}-master-${i}" "${ip_addresses[${CLUSTER_NAME}-master-${i}]}"
+    verify_dns_resolution "master-${i}" "${ip_addresses[${CLUSTER_NAME}-master-${i}]}"
 done
 for i in $(seq 1 "${N_WORK}"); do
-    verify_dns_resolution "${CLUSTER_NAME}-worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
+    verify_dns_resolution "worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
 done
 
 # Configure HAProxy on Load Balancer

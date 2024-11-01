@@ -102,6 +102,35 @@ update_dns_hosts() {
 
 update_dns_hosts
 
+# Function to verify DNS resolution for a VM
+verify_dns_resolution() {
+    local vm_name="$1"
+    local expected_ip="$2"
+    local fqdn="${vm_name}.${CLUSTER_NAME}.${BASE_DOM}"
+
+    echo -n "====> Verifying DNS resolution for ${fqdn}: "
+    while true; do
+        sleep 5
+        resolved_ip=$(nslookup "$fqdn" | grep -A1 "Name:" | grep "Address" | awk '{print $2}' 2> /dev/null)
+
+        if [[ "$resolved_ip" == "$expected_ip" ]]; then
+            echo "Resolved successfully to $resolved_ip"
+            break
+        else
+            echo -n "."
+        fi
+    done
+}
+
+# Verify DNS resolution for each VM
+verify_dns_resolution "${CLUSTER_NAME}-bootstrap" "${ip_addresses[${CLUSTER_NAME}-bootstrap]}"
+for i in $(seq 1 "${N_MAST}"); do
+    verify_dns_resolution "${CLUSTER_NAME}-master-${i}" "${ip_addresses[${CLUSTER_NAME}-master-${i}]}"
+done
+for i in $(seq 1 "${N_WORK}"); do
+    verify_dns_resolution "${CLUSTER_NAME}-worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
+done
+
 # Restart services to apply the changes
 restart_services() {
     local service

@@ -6,6 +6,9 @@ echo "#### CREATE BOOTSTRAPING RHCOS/OCP NODES ###"
 echo "############################################"
 echo 
 
+# Declare an associative array for storing IP addresses
+declare -A ip_addresses
+
 # Set the correct rootfs or image URL argument
 RHCOS_I_ARG="coreos.${RHCOS_LIVE:+live.}rootfs_url"
 [[ -z "$RHCOS_LIVE" ]] && RHCOS_I_ARG="coreos.inst.image_url"
@@ -19,11 +22,11 @@ create_vm() {
     local ignition_url="$5"
 
     echo -n "====> Creating ${vm_name} VM: "
-    virt-install --name "$vm_name" \
-        --disk "$disk,size=50" \
-        --ram "$memory" \
+    virt-install --name "${vm_name}" \
+        --disk "${disk},size=50" \
+        --ram "${memory}" \
         --cpu host \
-        --vcpus "$vcpus" \
+        --vcpus "${vcpus}" \
         --os-variant rhel9.0 \
         --network network="${VIR_NET}",model=virtio \
         --noreboot \
@@ -33,80 +36,53 @@ create_vm() {
     ok
 }
 
-# Create Bootstrap VM
-create_vm "${CLUSTER_NAME}-bootstrap" "$BTS_MEM" "$BTS_CPU" "${VM_DIR}/${CLUSTER_NAME}-bootstrap.qcow2" "http://${LBIP}:${WS_PORT}/bootstrap.ign"
-
-# Create Master VMs
-for i in $(seq 1 "${N_MAST}"); do
-    create_vm "${CLUSTER_NAME}-master-${i}" "$MAS_MEM" "$MAS_CPU" "${VM_DIR}/${CLUSTER_NAME}-master-${i}.qcow2" "http://${LBIP}:${WS_PORT}/master.ign"
-done
-
-# Create Worker VMs
-for i in $(seq 1 "${N_WORK}"); do
-    create_vm "${CLUSTER_NAME}-worker-${i}" "$WOR_MEM" "$WOR_CPU" "${VM_DIR}/${CLUSTER_NAME}-worker-${i}.qcow2" "http://${LBIP}:${WS_PORT}/worker.ign"
-done
-
-# Function to wait for VM installations to complete
-wait_for_installation() {
-    echo "====> Waiting for RHCOS installation to finish: "
-    local rvms
-    while rvms=$(virsh list --name --state-running | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
-        sleep 15
-        echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
-    done
-}
-
-# Function to start a VM if not already running
-start_vm() {
+# Function to start VM and obtain IP address, storing it in the associative array
+start_vm_with_dhcp() {
     local vm_name="$1"
-    if virsh domstate "$vm_name" | grep -q "running"; then
-        echo "====> ${vm_name} is already running."
-    else
-        echo -n "====> Starting ${vm_name} VM: "
-        virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
-        ok
-    fi
-}
 
-
-# Function to set up DHCP reservation for a VM
-setup_dhcp_reservation() {
-    local vm_name="$1"
-    local ip_var="$2"
+    echo -n "====> Starting ${vm_name} VM: "
+    virsh start "${vm_name}" > /dev/null || err "Failed to start VM: ${vm_name}"
+    ok
 
     echo -n "====> Waiting for ${vm_name} to obtain IP address: "
-    local IP
-    local MAC
     while true; do
         sleep 5
+        local IP
         IP=$(virsh domifaddr "${vm_name}" | grep ipv4 | head -n1 | awk '{print $4}' | cut -d'/' -f1 2> /dev/null)
-        [[ -n "${IP}" ]] && { echo "${IP}"; break; }
+        if [[ -n "$IP" ]]; then
+            echo "$IP"
+            ip_addresses["$vm_name"]="${IP}"  # Store IP in associative array
+            break
+        fi
     done
-    MAC=$(virsh domifaddr "$vm_name" | grep ipv4 | head -n1 | awk '{print $2}')
-    eval "${ip_var}='${IP}'"
+    local MAC
+    MAC=$(virsh domifaddr "${vm_name}" | grep ipv4 | head -n1 | awk '{print $2}')
 
     echo -n "  ==> Adding DHCP reservation for ${vm_name}: "
-    virsh net-update "${VIR_NET}" add-last ip-dhcp-host --xml "<host mac='$MAC' ip='$IP'/>" --live --config > /dev/null || \
+    virsh net-update "${VIR_NET}" add-last ip-dhcp-host --xml "<host mac='${MAC}' ip='${ip_addresses[$vm_name]}'/>" --live --config > /dev/null || \
         err "Failed to add DHCP reservation for ${vm_name}"
     ok
 }
 
-# Start and configure DHCP for Bootstrap, Masters, and Workers
-start_vm "${CLUSTER_NAME}-bootstrap"
-setup_dhcp_reservation "${CLUSTER_NAME}-bootstrap" BSIP
+# Create and configure Bootstrap VM
+create_vm "${CLUSTER_NAME}-bootstrap" "${BTS_MEM}" "${BTS_CPU}" "${VM_DIR}/${CLUSTER_NAME}-bootstrap.qcow2" "http://${LBIP}:${WS_PORT}/bootstrap.ign"
+start_vm_with_dhcp "${CLUSTER_NAME}-bootstrap"
 
+# Create and configure Master VMs
 for i in $(seq 1 "${N_MAST}"); do
-    start_vm "${CLUSTER_NAME}-master-${i}"
-    setup_dhcp_reservation "${CLUSTER_NAME}-master-${i}" "MASTER_IP_${i}"
+    create_vm "${CLUSTER_NAME}-master-${i}" "${MAS_MEM}" "${MAS_CPU}" "${VM_DIR}/${CLUSTER_NAME}-master-${i}.qcow2" "http://${LBIP}:${WS_PORT}/master.ign"
+    start_vm_with_dhcp "${CLUSTER_NAME}-master-${i}"
+
     echo -n "  ==> Adding SRV record in dnsmasq for Master-${i}: "
     echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOM},etcd-$((i-1)).${CLUSTER_NAME}.${BASE_DOM},2380,0,10" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || \
         err "Failed to add SRV record for Master-${i}"
     ok
 done
 
+# Create and configure Worker VMs
 for i in $(seq 1 "${N_WORK}"); do
-    start_vm "${CLUSTER_NAME}-worker-${i}"
-    setup_dhcp_reservation "${CLUSTER_NAME}-worker-${i}" "WORKER_IP_${i}"
+    create_vm "${CLUSTER_NAME}-worker-${i}" "${WOR_MEM}" "${WOR_CPU}" "${VM_DIR}/${CLUSTER_NAME}-worker-${i}.qcow2" "http://${LBIP}:${WS_PORT}/worker.ign"
+    start_vm_with_dhcp "${CLUSTER_NAME}-worker-${i}"
 done
 
 # Add DNS and hosts entries

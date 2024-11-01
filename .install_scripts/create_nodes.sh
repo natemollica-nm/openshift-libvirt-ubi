@@ -56,13 +56,18 @@ wait_for_installation() {
     done
 }
 
-# Function to start a VM
+# Function to start a VM if not already running
 start_vm() {
     local vm_name="$1"
-    echo -n "====> Starting ${vm_name} VM: "
-    virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
-    ok
+    if virsh domstate "$vm_name" | grep -q "running"; then
+        echo "====> ${vm_name} is already running."
+    else
+        echo -n "====> Starting ${vm_name} VM: "
+        virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
+        ok
+    fi
 }
+
 
 # Function to set up DHCP reservation for a VM
 setup_dhcp_reservation() {

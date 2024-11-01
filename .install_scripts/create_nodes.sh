@@ -120,7 +120,7 @@ verify_dns_resolution() {
     local expected_ip="$2"
     local fqdn="${vm_name}.${CLUSTER_NAME}.${BASE_DOM}"
 
-    echo -n "====> Verifying DNS resolution for ${fqdn}: "
+    echo -n "====> Verifying DNS resolution for ${fqdn} (ExpectedIP: ${expected_ip}): "
     while true; do
         sleep 5
         resolved_ip=$(nslookup "$fqdn" | grep -A1 "Name:" | grep "Address" | awk '{print $2}' 2> /dev/null)

@@ -82,6 +82,7 @@ fi
 IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
+export RHCOS_NORMALIZED_VER
 RHCOS_NORMALIZED_VER="$(echo "${IMAGE}" | sed 's/.*-\(4\..*\)-x86.*/\1/')"
 
 # CentOS cloud image check

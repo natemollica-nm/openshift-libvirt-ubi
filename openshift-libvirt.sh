@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # OpenShift UPI installation script
 # https://github.com/kxr/ocp4_setup_upi_kvm
 

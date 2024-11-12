@@ -20,7 +20,8 @@ create_vm() {
     local ignition_url="$5"
 
     echo -n "====> Creating ${vm_name} VM: "
-    virt-install --name "${vm_name}" \
+    virt-install \
+        --name "${vm_name}" \
         --disk "${disk},size=50" \
         --ram "${memory}" \
         --cpu host \
@@ -89,7 +90,6 @@ create_vm "${CLUSTER_NAME}-bootstrap" "${BTS_MEM}" "${BTS_CPU}" "${VM_DIR}/${CLU
 for i in $(seq 1 "${N_MAST}"); do
     vm_name="${CLUSTER_NAME}-master-${i}"
     create_vm "$vm_name" "${MAS_MEM}" "${MAS_CPU}" "${VM_DIR}/${vm_name}.qcow2" "http://${LBIP}:${WS_PORT}/master.ign"
-    ok
 done
 
 # Create and start Worker VMs

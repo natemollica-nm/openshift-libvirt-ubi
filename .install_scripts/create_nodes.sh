@@ -8,8 +8,11 @@ echo
 
 declare -A ip_addresses
 
-RHCOS_I_ARG="coreos.${RHCOS_LIVE:+live.}rootfs_url"
-[[ -z "$RHCOS_LIVE" ]] && RHCOS_I_ARG="coreos.inst.image_url"
+if [ -n "$RHCOS_LIVE" ]; then
+    RHCOS_I_ARG="coreos.live.rootfs_url"
+else
+    RHCOS_I_ARG="coreos.inst.image_url"
+fi
 
 # Function to create a VM with given parameters
 create_vm() {
@@ -86,13 +89,11 @@ start_vm_with_dhcp() {
 
 # Create and start Bootstrap VM
 create_vm "${CLUSTER_NAME}-bootstrap" "${BTS_MEM}" "${BTS_CPU}" "${VM_DIR}/${CLUSTER_NAME}-bootstrap.qcow2" "http://${LBIP}:${WS_PORT}/bootstrap.ign"
-
 # Create and start Master VMs
 for i in $(seq 1 "${N_MAST}"); do
     vm_name="${CLUSTER_NAME}-master-${i}"
     create_vm "$vm_name" "${MAS_MEM}" "${MAS_CPU}" "${VM_DIR}/${vm_name}.qcow2" "http://${LBIP}:${WS_PORT}/master.ign"
 done
-
 # Create and start Worker VMs
 for i in $(seq 1 "${N_WORK}"); do
     vm_name="${CLUSTER_NAME}-worker-${i}"
@@ -101,36 +102,9 @@ done
 
 # Wait for RHCOS Installation to complete
 echo "====> Waiting for RHCOS Installation to finish: "
-while true; do
-    pending_vms=""
-
-    # Check bootstrap VM
-    if [[ $(virsh domstate "${CLUSTER_NAME}-bootstrap" 2>/dev/null) != "shut off" ]]; then
-        pending_vms+="${CLUSTER_NAME}-bootstrap "
-    fi
-
-    # Check master VMs
-    for i in $(seq 1 "${N_MAST}"); do
-        if [[ $(virsh domstate "${CLUSTER_NAME}-master-${i}" 2>/dev/null) != "shut off" ]]; then
-            pending_vms+="${CLUSTER_NAME}-master-${i} "
-        fi
-    done
-
-    # Check worker VMs
-    for i in $(seq 1 "${N_WORK}"); do
-        if [[ $(virsh domstate "${CLUSTER_NAME}-worker-${i}" 2>/dev/null) != "shut off" ]]; then
-            pending_vms+="${CLUSTER_NAME}-worker-${i} "
-        fi
-    done
-
-    # If no pending VMs, break the loop
-    if [[ -z "$pending_vms" ]]; then
-        echo "All VMs have completed installation."
-        break
-    else
-        echo "  --> VMs with pending installation: $pending_vms"
-        sleep 15
-    fi
+while rvms=$(virsh list --name | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
+    sleep 15
+    echo "  *==> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
 done
 
 # Create and start Bootstrap VM

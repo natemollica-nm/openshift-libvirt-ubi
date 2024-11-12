@@ -60,7 +60,7 @@ prepare_rhcos_files() {
 arch = x86_64
 family = Red Hat CoreOS
 platforms = x86_64
-version = ${RHCOS_NORMALIZED_VER}
+version = ${OCP_VER}
 [images-x86_64]
 initrd = initramfs.img
 kernel = vmlinuz

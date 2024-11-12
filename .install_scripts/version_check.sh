@@ -28,6 +28,7 @@ lookup_release_file() {
     echo "$file"
 }
 
+export OCP_VER
 # Determine OpenShift release version
 if [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]; then
     urldir="$OCP_VERSION"
@@ -99,6 +100,6 @@ echo "                    RHCOS Image = $IMAGE_URL"
 echo "                   Kernel Image = $KERNEL_URL"
 echo "                Initramfs Image = $INITRAMFS_URL"
 echo
-
+[ -z "$OCP_VER" ] && OCP_VER=$(echo "$OCP_NORMALIZED_VER" | cut -d '.' -f1-2)
 # Prompt user to continue
 check_if_we_can_continue

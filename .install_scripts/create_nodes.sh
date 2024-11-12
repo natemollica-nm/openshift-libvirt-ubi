@@ -2,7 +2,7 @@
 
 echo 
 echo "############################################"
-echo "#### CREATE BOOTSTRAPING RHCOS/OCP NODES ###"
+echo "#### CREATE BOOTSTRAPPING RHCOS/OCP NODES ###"
 echo "############################################"
 echo 
 

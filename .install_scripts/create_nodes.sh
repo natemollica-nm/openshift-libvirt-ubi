@@ -120,8 +120,13 @@ update_dns_hosts
 
 # Restart services to apply the changes
 restart_services() {
-    echo -n "====> Restarting libvirt modular daemons and DNS services: "
-    systemctl restart virtnetworkd || err "Failed to restart virtnetworkd"
+    local service
+    for service in qemu interface network nodedev nwfilter secret storage log; do
+        echo -n "====> Restarting virt${service}d daemon: "
+        systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
+        ok
+    done
+    echo -n "====> Restarting DNS service $DNS_SVC: "
     systemctl "$DNS_CMD" "$DNS_SVC" || err "Failed to reload DNS service $DNS_SVC"
     ok
 }

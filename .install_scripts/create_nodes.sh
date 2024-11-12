@@ -56,9 +56,13 @@ start_vm_with_dhcp() {
     local vm_name="$1"
     local dns_name="$2"
 
-    echo -n "====> Starting ${vm_name} VM: "
-    virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
-    ok
+    if virsh domstate "$vm_name" | grep -q "running"; then
+        echo "====> Verified ${vm_name} is already running."
+    else
+        echo -n "====> Starting ${vm_name} VM: "
+        virsh start "$vm_name" > /dev/null || err "Failed to start VM: ${vm_name}"
+        ok
+    fi
 
     echo -n "====> Waiting for ${vm_name} to obtain IP address: "
     while true; do

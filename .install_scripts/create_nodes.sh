@@ -105,6 +105,13 @@ for i in $(seq 1 "${N_WORK}"); do
     start_vm_with_dhcp "$vm_name" "worker-${i}"
 done
 
+# Wait for RHCOS Installation to complete
+echo "====> Waiting for RHCOS Installation to finish: "
+while rvms=$(virsh list --name | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
+    sleep 15
+    echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
+done
+
 # Add DNS and hosts entries
 update_dns_hosts() {
     echo -n "====> Marking ${CLUSTER_NAME}.${BASE_DOM} as local in dnsmasq: "

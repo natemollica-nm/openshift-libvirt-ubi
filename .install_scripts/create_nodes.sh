@@ -19,6 +19,7 @@ create_vm() {
     local disk="$4"
     local ignition_url="$5"
 
+    # virt-install --os-variant list | grep rhel
     echo -n "====> Creating ${vm_name} VM: "
     virt-install \
         --name "${vm_name}" \
@@ -26,7 +27,7 @@ create_vm() {
         --ram "${memory}" \
         --cpu host \
         --vcpus "${vcpus}" \
-        --os-variant rhel9.0 \
+        --os-variant rhel9.4 \
         --network network="${VIR_NET}",model=virtio \
         --noreboot \
         --noautoconsole \

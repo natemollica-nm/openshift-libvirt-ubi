@@ -107,9 +107,72 @@ done
 
 # Wait for RHCOS Installation to complete
 echo "====> Waiting for RHCOS Installation to finish: "
-while rvms=$(virsh list --name | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
-    sleep 15
-    echo "  --> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
+while true; do
+    pending_vms=""
+
+    # Check bootstrap VM
+    if [[ $(virsh domstate "${CLUSTER_NAME}-bootstrap" 2>/dev/null) != "shut off" ]]; then
+        pending_vms+="${CLUSTER_NAME}-bootstrap "
+    fi
+
+    # Check master VMs
+    for i in $(seq 1 "${N_MAST}"); do
+        if [[ $(virsh domstate "${CLUSTER_NAME}-master-${i}" 2>/dev/null) != "shut off" ]]; then
+            pending_vms+="${CLUSTER_NAME}-master-${i} "
+        fi
+    done
+
+    # Check worker VMs
+    for i in $(seq 1 "${N_WORK}"); do
+        if [[ $(virsh domstate "${CLUSTER_NAME}-worker-${i}" 2>/dev/null) != "shut off" ]]; then
+            pending_vms+="${CLUSTER_NAME}-worker-${i} "
+        fi
+    done
+
+    # If no pending VMs, break the loop
+    if [[ -z "$pending_vms" ]]; then
+        echo "All VMs have completed installation."
+        break
+    else
+        echo "  --> VMs with pending installation: $pending_vms"
+        sleep 15
+    fi
+done
+
+# Function to start a VM and verify it's running
+start_vm() {
+    local vm_name="$1"
+
+    echo -n "====> Starting ${vm_name}: "
+    virsh start "${vm_name}" > /dev/null || { echo "Failed to start ${vm_name}"; return 1; }
+
+    # Verify VM is running
+    local vm_state
+    while true; do
+        sleep 5
+        vm_state=$(virsh domstate "${vm_name}" 2>/dev/null)
+        if [[ "$vm_state" == "running" ]]; then
+            echo "${vm_name} is running."
+            break
+        fi
+        echo -n "."
+    done
+}
+
+# Start each VM after installations are complete
+echo "====> Starting all VMs after RHCOS installation is complete."
+
+# Start Bootstrap VM
+start_vm "${CLUSTER_NAME}-bootstrap"
+
+# Start Master VMs
+for i in $(seq 1 "${N_MAST}"); do
+    start_vm "${CLUSTER_NAME}-master-${i}"
+done
+
+# Start Worker VMs
+for i in $(seq 1 "${N_WORK}"); do
+    start_vm "${CLUSTER_NAME}-worker-${i}"
 done
 
 # Add DNS and hosts entries

@@ -105,6 +105,62 @@ for i in $(seq 1 "${N_WORK}"); do
     start_vm_with_dhcp "$vm_name" "worker-${i}"
 done
 
+# Add DNS and hosts entries
+update_dns_hosts() {
+    echo -n "====> Marking ${CLUSTER_NAME}.${BASE_DOM} as local in dnsmasq: "
+    echo "local=/${CLUSTER_NAME}.${BASE_DOM}/" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Updating dnsmasq configuration failed"
+    ok
+
+    echo -n '====> Adding wildcard (*.apps) DNS record in dnsmasq: '
+    echo "address=/apps.${CLUSTER_NAME}.${BASE_DOM}/${LBIP}" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Failed to add wildcard DNS record"
+    ok
+}
+
+update_dns_hosts
+
+# Restart services to apply the changes
+restart_services() {
+    echo -n "====> Restarting libvirt modular daemons and DNS services: "
+    systemctl restart virtnetworkd || err "Failed to restart virtnetworkd"
+    systemctl "$DNS_CMD" "$DNS_SVC" || err "Failed to reload DNS service $DNS_SVC"
+    ok
+}
+
+restart_services
+
+# Function to verify DNS resolution for a VM
+verify_dns_resolution() {
+    local vm_name="$1"
+    local expected_ip="$2"
+    local fqdn="${vm_name}.${CLUSTER_NAME}.${BASE_DOM}"
+
+    echo -n "====> Verifying DNS resolution for ${fqdn} (ExpectedIP: ${expected_ip}): "
+    local resolved_ip
+    while true; do
+        sleep 5
+        resolved_ip=$(nslookup "$fqdn" | grep -A1 "Name:" | grep "Address" | awk '{print $2}' 2> /dev/null)
+
+        if [[ "$resolved_ip" == "$expected_ip" ]]; then
+            echo " *==> $resolved_ip"
+            break
+        elif [[ -n "$resolved_ip" ]] && [[ "$resolved_ip" != "$expected_ip" ]]; then
+            echo " *==> $resolved_ip (INVALID!)"
+            break
+        else
+            echo -n "."
+        fi
+    done
+}
+
+# Verify DNS resolution for each VM
+verify_dns_resolution "bootstrap" "${ip_addresses[${CLUSTER_NAME}-bootstrap]}"
+for i in $(seq 1 "${N_MAST}"); do
+    verify_dns_resolution "master-${i}" "${ip_addresses[${CLUSTER_NAME}-master-${i}]}"
+done
+for i in $(seq 1 "${N_WORK}"); do
+    verify_dns_resolution "worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
+done
+
 # Wait for RHCOS Installation to complete
 echo "====> Waiting for RHCOS Installation to finish: "
 while true; do
@@ -173,59 +229,6 @@ done
 # Start Worker VMs
 for i in $(seq 1 "${N_WORK}"); do
     start_vm "${CLUSTER_NAME}-worker-${i}"
-done
-
-# Add DNS and hosts entries
-update_dns_hosts() {
-    echo -n "====> Marking ${CLUSTER_NAME}.${BASE_DOM} as local in dnsmasq: "
-    echo "local=/${CLUSTER_NAME}.${BASE_DOM}/" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Updating dnsmasq configuration failed"
-    ok
-
-    echo -n '====> Adding wildcard (*.apps) DNS record in dnsmasq: '
-    echo "address=/apps.${CLUSTER_NAME}.${BASE_DOM}/${LBIP}" >> "${DNS_DIR}/${CLUSTER_NAME}.conf" || err "Failed to add wildcard DNS record"
-    ok
-}
-
-update_dns_hosts
-
-# Restart services to apply the changes
-restart_services() {
-    echo -n "====> Restarting libvirt modular daemons and DNS services: "
-    systemctl restart virtnetworkd || err "Failed to restart virtnetworkd"
-    systemctl "$DNS_CMD" "$DNS_SVC" || err "Failed to reload DNS service $DNS_SVC"
-    ok
-}
-
-restart_services
-
-# Function to verify DNS resolution for a VM
-verify_dns_resolution() {
-    local vm_name="$1"
-    local expected_ip="$2"
-    local fqdn="${vm_name}.${CLUSTER_NAME}.${BASE_DOM}"
-
-    echo -n "====> Verifying DNS resolution for ${fqdn} (ExpectedIP: ${expected_ip}): "
-    local resolved_ip
-    while true; do
-        sleep 5
-        resolved_ip=$(nslookup "$fqdn" | grep -A1 "Name:" | grep "Address" | awk '{print $2}' 2> /dev/null)
-
-        if [[ "$resolved_ip" == "$expected_ip" ]]; then
-            echo "Resolved successfully to $resolved_ip"
-            break
-        else
-            echo -n "."
-        fi
-    done
-}
-
-# Verify DNS resolution for each VM
-verify_dns_resolution "bootstrap" "${ip_addresses[${CLUSTER_NAME}-bootstrap]}"
-for i in $(seq 1 "${N_MAST}"); do
-    verify_dns_resolution "master-${i}" "${ip_addresses[${CLUSTER_NAME}-master-${i}]}"
-done
-for i in $(seq 1 "${N_WORK}"); do
-    verify_dns_resolution "worker-${i}" "${ip_addresses[${CLUSTER_NAME}-worker-${i}]}"
 done
 
 # Configure HAProxy on Load Balancer

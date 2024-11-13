@@ -65,11 +65,11 @@ urldir="${RHCOS_VER}"/"${RHCOS_MINOR}"
 
 # RHCOS kernel, initramfs, and image download links
 KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
-KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}"
+[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}" || KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
 check_url "Kernel" "$KERNEL_URL" "$KERNEL"
 
 INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
-INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}"
+[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}" || INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
@@ -81,7 +81,7 @@ elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
 else
     err "Unhandled RHCOS configuration. Exiting."
 fi
-IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}"
+[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
 export RHCOS_NORMALIZED_VER
@@ -97,7 +97,7 @@ echo "      Red Hat OpenShift Version = $OCP_NORMALIZED_VER"
 echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER"
 echo "                         Client = $CLIENT_URL"
 echo "                      Installer = $INSTALLER_URL"
-echo "                    RHCOS Image = $IMAGE_URL"
+echo "                    RHCOS Image = $IMAGE_URL (image: $IMAGE)"
 echo "                   Kernel Image = $KERNEL_URL"
 echo "                Initramfs Image = $INITRAMFS_URL"
 echo

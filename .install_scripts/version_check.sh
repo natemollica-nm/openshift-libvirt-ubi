@@ -61,7 +61,7 @@ else
 fi
 
 # Combine RHCOS_VER and RHCOS_MINOR to form urldir
-urldir="${RHCOS_VER}/${RHCOS_MINOR}"
+urldir="${RHCOS_VER}"/"${RHCOS_MINOR}"
 
 # RHCOS kernel, initramfs, and image download links
 KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
@@ -73,6 +73,7 @@ INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
+export IMAGE
 if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
     IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
 elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then

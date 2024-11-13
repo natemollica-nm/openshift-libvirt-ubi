@@ -40,17 +40,18 @@ customize_lb_image() {
 # Function to create and configure the Load Balancer VM
 create_lb_vm() {
     echo -n "====> Creating Load Balancer VM: "
-    virt-install --name "${CLUSTER_NAME}-lb" \
+    virt-install \
+        --name "${CLUSTER_NAME}-lb" \
         --import \
         --cpu host \
+        --noreboot \
+        --os-variant rhel9.0 \
         --vcpus "${LB_CPU}" \
         --memory "${LB_MEM}" \
-        --os-variant rhel9.0 \
-        --disk "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
         --network network="${VIR_NET}",model=virtio \
-        --noreboot \
-        --noautoconsole > /dev/null || \
-        err "Failed to create Load Balancer VM from ${VM_DIR}/${CLUSTER_NAME}-lb.qcow2"
+        --disk "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
+        --noautoconsole \
+        >/dev/null || err "Failed to create Load Balancer VM from ${VM_DIR}/${CLUSTER_NAME}-lb.qcow2"
     ok
 }
 

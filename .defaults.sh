@@ -84,21 +84,21 @@ export SSH_PUB_KEY_FILE=""
 # switches everytime you run the script.
 
 # --autostart-vms
-export AUTOSTART_VMS="no"
+export AUTOSTART_VMS=no
 
 # -k, --keep-bootstrap
-export KEEP_BS="no"
+export KEEP_BS=no
 
 # -X, --fresh-download
-export FRESH_DOWN="no"
+export FRESH_DOWN=no
 
 # --destroy
 # Don't set this to yes
-export DESTROY="no"
+export DESTROY=no
 
 # -y, --yes
-export YES="no"
+export YES=no
 
-export OCP_MIRROR="https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
-export RHCOS_MIRROR="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos"
-export LB_IMG_URL="https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20231002.0.x86_64.qcow2"
+export OCP_MIRROR=https://mirror.openshift.com/pub/openshift-v4/clients/ocp
+export RHCOS_MIRROR=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos
+export LB_IMG_URL=https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20231002.0.x86_64.qcow2

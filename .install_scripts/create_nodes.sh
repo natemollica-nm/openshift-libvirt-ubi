@@ -26,16 +26,17 @@ create_vm() {
     echo -n "====> Creating ${vm_name} VM: "
     virt-install \
         --name "${vm_name}" \
-        --disk "${disk},size=50" \
-        --ram "${memory}" \
+        --noreboot \
         --cpu host \
+        --noautoconsole \
+        --ram "${memory}" \
         --vcpus "${vcpus}" \
         --os-variant rhel9.4 \
-        --network network="${VIR_NET}",model=virtio \
-        --noreboot \
-        --noautoconsole \
+        --disk "${disk},size=50" \
         --location rhcos-install/ \
-        --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}" > /dev/null || err "Failed to create VM: ${vm_name}"
+        --network network="${VIR_NET}",model=virtio \
+        --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}" \
+        >/dev/null || err "Failed to create VM: ${vm_name}"
     ok
 }
 

@@ -22,6 +22,7 @@ create_vm() {
     local disk="$4"
     local ignition_url="$5"
 
+    local ignition_args="nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}"
     # virt-install --os-variant list | grep rhel
     echo -n "====> Creating ${vm_name} VM: "
     virt-install \
@@ -35,9 +36,11 @@ create_vm() {
         --disk "${disk},size=50" \
         --location rhcos-install/ \
         --network network="${VIR_NET}",model=virtio \
-        --extra-args "nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}" \
+        --extra-args "${ignition_args}" \
         >/dev/null || err "Failed to create VM: ${vm_name}"
     ok
+    echo "    *==>        VM: ${vm_name}"
+    echo "    *==> ExtraArgs: ${ignition_args}"
 }
 
 # Function for DHCP reservation and updating /etc/hosts

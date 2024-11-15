@@ -106,7 +106,7 @@ done
 
 # Wait for RHCOS Installation to complete
 echo "====> Waiting for RHCOS Installation to finish: "
-while rvms=$(virsh list --name | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2> /dev/null); do
+while rvms=$(virsh list --name | grep "${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap" 2>/dev/null); do
     sleep 15
     echo "  *==> VMs with pending installation: $(echo "$rvms" | tr '\n' ' ')"
 done

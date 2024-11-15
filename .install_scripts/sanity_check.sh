@@ -34,10 +34,10 @@ check_dependencies() {
     echo "====> Checking dependencies: "
     for cmd in "${!dependencies[@]}"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
-            echo "Dependency $cmd not found."
+            echo "    *==> Dependency $cmd not found."
             install_dependency "$cmd"
         else
-            ok "$cmd found."
+            ok "    *==> $cmd found."
         fi
     done
 

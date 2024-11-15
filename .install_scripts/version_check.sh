@@ -28,6 +28,11 @@ lookup_release_file() {
     echo "$file"
 }
 
+# Function for checking "latest" or "stable" canonical versioning
+is_canonical() {
+  [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]
+}
+
 export OCP_VER
 # Determine OpenShift release version
 if [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]; then
@@ -65,11 +70,11 @@ urldir="${RHCOS_VER}"/"${RHCOS_MINOR}"
 
 # RHCOS kernel, initramfs, and image download links
 KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
-[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}" || KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
+is_canonical && KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}" || KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
 check_url "Kernel" "$KERNEL_URL" "$KERNEL"
 
 INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
-[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}" || INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
+is_canonical && INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}" || INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
@@ -81,7 +86,7 @@ elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
 else
     err "Unhandled RHCOS configuration. Exiting."
 fi
-[[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]] && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
+is_canonical && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
 export RHCOS_NORMALIZED_VER

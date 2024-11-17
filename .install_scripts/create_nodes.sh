@@ -24,9 +24,11 @@ create_vm() {
 
     local ignition_args="nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}"
     # virt-install --os-variant list | grep rhel
+    # https://access.redhat.com/articles/6907891
     echo -n "====> Creating ${vm_name} VM: "
     virt-install \
         --name "${vm_name}" \
+        --force \
         --noreboot \
         --cpu host \
         --noautoconsole \

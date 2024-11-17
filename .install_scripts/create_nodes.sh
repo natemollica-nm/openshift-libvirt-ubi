@@ -28,12 +28,12 @@ create_vm() {
     echo -n "====> Creating ${vm_name} VM: "
     virt-install \
         --name "${vm_name}" \
-        --force \
         --noreboot \
         --cpu host \
         --noautoconsole \
         --ram "${memory}" \
         --vcpus "${vcpus}" \
+        --os-type linux \
         --os-variant rhel9.2 \
         --disk "${disk},size=50" \
         --location rhcos-install/ \

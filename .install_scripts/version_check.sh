@@ -5,6 +5,8 @@ echo "##########################################"
 echo "### OPENSHIFT/RHCOS VERSION/URL CHECK  ###"
 echo "##########################################"
 echo
+## Installing RHCOS by using PXE iPXE booting (Bare Metal)
+## https://docs.openshift.com/container-platform/4.17/installing/installing_bare_metal/installing-bare-metal.html#installation-user-infra-machines-pxe_installing-bare-metal
 
 # Function to display and check URL availability
 check_url() {
@@ -33,15 +35,28 @@ is_canonical() {
   [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]
 }
 
+## Obtain RHCOS kernel, initramfs, and rootfs files
+rhcos_stream_retrieve() {
+    local rhcos_file="$1"
+    local delim='.'
+
+    [[ "${rhcos_file}" =~ kernel|initramfs|rootfs ]] || err "Invalid RHCOS filetype download! Must be one of 'kernel', 'initramfs', or 'rootfs'..."
+    [[ "${rhcos_file}" =~ kernel ]] && delim='-'
+
+    local pattern="${rhcos_file}${delim}"
+
+    ./openshift-install coreos print-stream-json | grep -Eo "https.*(${pattern})\w+(\.img)?" | grep "$(arch)"
+}
+
 export OCP_VER
 # Determine OpenShift release version
-if [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]; then
+if is_canonical; then
     urldir="$OCP_VERSION"
 else
     [[ "$(echo "$OCP_VERSION" | cut -d '.' -f1)" == "4" ]] || err "Invalid OpenShift version $OCP_VERSION"
     OCP_VER=$(echo "$OCP_VERSION" | cut -d '.' -f1-2)
     OCP_MINOR=$(echo "$OCP_VERSION" | cut -d '.' -f3- || echo "stable")
-    urldir="${OCP_MINOR}-${OCP_VER}"
+    urldir="${OCP_VER}.${OCP_MINOR}"
 fi
 
 # OpenShift client and installer download links

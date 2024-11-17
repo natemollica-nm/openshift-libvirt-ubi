@@ -38,7 +38,8 @@ fi
 
 ## https://www.libguestfs.org/guestfs.3.html#backend
 ## Find the socket: ss -lx | grep libvirt
-export LIBGUESTFS_BACKEND=direct
+# export LIBGUESTFS_BACKEND=direct
+virsh connect qemu:///system
 
 # Dependencies & Sanity checks
 source ${SDIR}/.install_scripts/sanity_check.sh

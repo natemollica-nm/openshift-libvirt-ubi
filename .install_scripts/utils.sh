@@ -62,8 +62,8 @@ download() {
                 echo "(reusing cached file ${file})"
             else
                 echo "Downloading ${file}..."
-                wget -q --show-progress --progress=bar:force "${url}" -O "${CACHE_DIR}/${file}" || err "Error downloading ${file} from ${url}"
-                # wget -q --show-progress --progress=bar:force "${url}" -O "${CACHE_DIR}/${file}.part" || err "Error downloading ${file} from ${url}"
+                # wget -q --show-progress --progress=bar:force "${url}" -O "${CACHE_DIR}/${file}" || err "Error downloading ${file} from ${url}"
+                wget -q --show-progress --progress=bar:force "${url}" -O "${CACHE_DIR}/${file}.part" || err "Error downloading ${file} from ${url}"
                 mv "${CACHE_DIR}/${file}.part" "${CACHE_DIR}/${file}" || err "Error finalizing download for ${file}"
             fi
             ;;

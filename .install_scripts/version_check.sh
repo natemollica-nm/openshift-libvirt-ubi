@@ -94,9 +94,12 @@ check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
 export IMAGE
+export RHCOS_LIVE
 if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
+    RHCOS_LIVE="yes"
     IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
 elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
+    RHCOS_LIVE=""
     IMAGE="$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")"
 else
     err "Unhandled RHCOS configuration. Exiting."

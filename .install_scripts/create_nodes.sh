@@ -32,7 +32,7 @@ create_vm() {
         --noautoconsole \
         --ram "${memory}" \
         --vcpus "${vcpus}" \
-        --os-variant rhel9.0 \
+        --os-variant rhel9.2 \
         --disk "${disk},size=50" \
         --location rhcos-install/ \
         --network network="${VIR_NET}",model=virtio \

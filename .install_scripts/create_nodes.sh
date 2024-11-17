@@ -42,6 +42,7 @@ create_vm() {
         >/dev/null || err "Failed to create VM: ${vm_name}"
     ok
     echo "    *==>        VM: ${vm_name}"
+    echo "    *==>   Network: ${VIR_NET}"
     echo "    *==> ExtraArgs: ${ignition_args}"
 }
 

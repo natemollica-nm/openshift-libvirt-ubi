@@ -111,16 +111,17 @@ RHCOS_NORMALIZED_VER="$(echo "${IMAGE}" | sed 's/.*-\(4\..*\)-x86.*/\1/')"
 LB_IMG="${LB_IMG_URL##*/}"
 check_url "CentOS cloud image" "$LB_IMG_URL" "$LB_IMG"
 
+[ -z "$OCP_VER" ] && OCP_VER=$(echo "$OCP_NORMALIZED_VER" | cut -d '.' -f1-2)
 # Display detected versions
 echo
 echo "      Red Hat OpenShift Version = $OCP_NORMALIZED_VER"
-echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER"
+echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER ($OCP_VER)"
 echo "                         Client = $CLIENT_URL"
 echo "                      Installer = $INSTALLER_URL"
 echo "                    RHCOS Image = $IMAGE_URL (image: $IMAGE)"
 echo "                   Kernel Image = $KERNEL_URL"
 echo "                Initramfs Image = $INITRAMFS_URL"
 echo
-[ -z "$OCP_VER" ] && OCP_VER=$(echo "$OCP_NORMALIZED_VER" | cut -d '.' -f1-2)
+
 # Prompt user to continue
 check_if_we_can_continue

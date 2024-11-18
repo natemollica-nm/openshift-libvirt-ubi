@@ -16,7 +16,7 @@ export RHCOS_VERSION=""
 export N_MAST="3"
 
 # -w, --workers N
-export N_WORK="2"
+export N_WORK="3"
 
 # --master-cpu N(vCPU)
 export MAS_CPU="4"

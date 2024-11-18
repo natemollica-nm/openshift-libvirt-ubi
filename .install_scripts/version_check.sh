@@ -35,11 +35,9 @@ is_canonical() {
   [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]
 }
 
-download_ocp_tools() {
-    echo -n "====> Downloading OpenShift Client: "; download get "$CLIENT" "$CLIENT_URL"
+download_openshift_installer() {
     echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
-    tar -xf "${CACHE_DIR}/${CLIENT}" && rm -f README.md
-    tar -xf "${CACHE_DIR}/${INSTALLER}" && rm -f README.md
+    tar -xf "${CACHE_DIR}/${INSTALLER}" -d /tmp && rm -f /tmp/README.md
 }
 
 ## Obtain RHCOS kernel, initramfs, and rootfs files
@@ -82,7 +80,7 @@ check_url "Installer" "$INSTALLER_URL" "$INSTALLER"
 
 OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/')
 
-download_ocp_tools
+download_openshift_installer
 
 # Determine RHCOS release version
 if [[ -z "$RHCOS_VERSION" ]]; then

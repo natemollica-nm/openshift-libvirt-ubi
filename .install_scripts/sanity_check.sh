@@ -34,10 +34,10 @@ check_dependencies() {
     echo "====> Checking dependencies: "
     for cmd in "${!dependencies[@]}"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
-            echo "    *==> Dependency $cmd not found."
+            echo "      *==> Dependency $cmd not found."
             install_dependency "$cmd"
         else
-            ok "    *==> $cmd found."
+            ok "      *==> $cmd found."
         fi
     done
 
@@ -103,13 +103,10 @@ start_libvirt_services() {
 check_libvirt_services() {
     local service
 
+    echo -n "====> Checking if libvirt modular daemon services are enabled/active and can restart: "
     for service in qemu interface network nodedev nwfilter secret storage log; do
-        echo -n "====> Checking if virt${service}d is running or enabled: "
         systemctl -q is-active "virt${service}d" || systemctl -q is-enabled "virt${service}d" || \
             err "virt${service}d is not running nor enabled"
-        ok
-
-        echo -n "====> Testing virt${service}d restart: "
         systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
         ok
     done
@@ -117,6 +114,7 @@ check_libvirt_services() {
 
 # Function to check for existing VMs
 check_existing_vms() {
+    local existing_vm
     echo -n "====> Checking for any existing leftover VMs: "
     existing_vm=$(virsh list --all --name | grep -m1 "${CLUSTER_NAME}-lb\|${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap") || true
     test -z "$existing_vm" || err "Found existing VM: $existing_vm"
@@ -164,11 +162,14 @@ check_dns_and_hosts() {
     ok
 
     echo -n "====> Checking for leftover/conflicting DNS records: "
+    local host
     for host in api api-int bootstrap master-1 master-2 master-3 etcd-0 etcd-1 etcd-2 worker-1 worker-2 test.apps; do
+        local res
         res=$(dig +short "${host}.${CLUSTER_NAME}.${BASE_DOM}" @127.0.0.1) || err "Failed dig @127.0.0.1"
         test -z "$res" || err "Found existing DNS record for ${host}.${CLUSTER_NAME}.${BASE_DOM}: ${res}"
     done
 
+    local existing_hosts
     existing_hosts=$(grep -v "^#" /etc/hosts | grep -w -m1 "${CLUSTER_NAME}\.${BASE_DOM}") || true
     test -z "$existing_hosts" || err "Found existing /etc/hosts records" "$existing_hosts"
     ok

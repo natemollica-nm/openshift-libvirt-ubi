@@ -94,15 +94,12 @@ check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
 export IMAGE
-export RHCOS_LIVE
 if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
-    RHCOS_LIVE="yes"
     IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
 elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
-    RHCOS_LIVE=""
     IMAGE="$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")"
 else
-    err "Unhandled RHCOS configuration. Exiting."
+    err "Unhandled RHCOS configuration (neither live-rootfs or installer), exiting..."
 fi
 is_canonical && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
@@ -118,7 +115,7 @@ check_url "CentOS cloud image" "$LB_IMG_URL" "$LB_IMG"
 # Display detected versions
 echo
 echo "      Red Hat OpenShift Version = $OCP_NORMALIZED_VER"
-echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER ($OCP_VER)"
+echo "      Red Hat CoreOS Version    = $RHCOS_NORMALIZED_VER (.treeinfo: $OCP_VER)"
 echo "                         Client = $CLIENT_URL"
 echo "                      Installer = $INSTALLER_URL"
 echo "                    RHCOS Image = $IMAGE_URL (image: $IMAGE)"

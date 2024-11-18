@@ -17,9 +17,11 @@ err() {
     while [[ $# -gt 0 ]]; do echo "    $1"; shift; done
     echo; exit 1;
 }
+
 ok() {
     test -z "$1" && echo "ok" || echo "$1"
 }
+
 SDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SDIR}/env || err "${SDIR}/env not found."
 

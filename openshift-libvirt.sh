@@ -37,8 +37,8 @@ if [ "${DESTROY}" == "yes" ]; then
 fi
 
 ## https://www.libguestfs.org/guestfs.3.html#backend
-## Find the socket: ss -lx | grep libvirt
-# export LIBGUESTFS_BACKEND=direct
+# Connect to system via qemu driver in libvirt
+#  - avoids having to use export LIBGUESTFS_BACKEND=direct
 virsh connect qemu:///system
 
 # Dependencies & Sanity checks

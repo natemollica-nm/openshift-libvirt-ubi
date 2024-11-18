@@ -8,7 +8,7 @@ echo
 
 declare -A ip_addresses
 
-if [ -n "$RHCOS_LIVE" ]; then
+if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
     RHCOS_I_ARG="coreos.live.rootfs_url"
 else
     RHCOS_I_ARG="coreos.inst.image_url"
@@ -38,11 +38,8 @@ create_vm() {
         --location rhcos-install/ \
         --network network="${VIR_NET}",model=virtio \
         --extra-args "${ignition_args}" \
-        >/dev/null || err "Failed to create VM: ${vm_name}"
+        >/dev/null || err "Failed to create VM: ${vm_name} | Network: ${VIR_NET} | Kernel Args: ${ignition_args}"
     ok
-    echo "    *==>        VM: ${vm_name}"
-    echo "    *==>   Network: ${VIR_NET}"
-    echo "    *==> ExtraArgs: ${ignition_args}"
 }
 
 # Function for DHCP reservation and updating /etc/hosts

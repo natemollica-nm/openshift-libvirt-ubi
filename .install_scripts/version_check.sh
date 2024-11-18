@@ -88,25 +88,34 @@ fi
 # Combine RHCOS_VER and RHCOS_MINOR to form urldir
 urldir="${RHCOS_VER}"/"${RHCOS_MINOR}"
 
+export KERNEL
 # RHCOS kernel, initramfs, and image download links
-KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
-is_canonical && KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}" || KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
+KERNEL_URL="$(rhcos_stream_retrieve kernel)"
+KERNEL="$(basename "$KERNEL_URL")"
+#KERNEL="$(lookup_release_file "RHCOS kernel" "${RHCOS_MIRROR}/${urldir}/" "installer-kernel\|live-kernel")"
+#is_canonical && KERNEL_URL="${RHCOS_MIRROR}${urldir}/${KERNEL}" || KERNEL_URL="${RHCOS_MIRROR}/${urldir}/${KERNEL}"
+
 check_url "Kernel" "$KERNEL_URL" "$KERNEL"
 
-INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
-is_canonical && INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}" || INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
+export INITRAMFS
+INITRAMFS_URL="$(rhcos_stream_retrieve initramfs)"
+#INITRAMFS="$(lookup_release_file "RHCOS initramfs" "${RHCOS_MIRROR}/${urldir}/" "installer-initramfs\|live-initramfs")"
+#is_canonical && INITRAMFS_URL="${RHCOS_MIRROR}${urldir}/${INITRAMFS}" || INITRAMFS_URL="${RHCOS_MIRROR}/${urldir}/${INITRAMFS}"
+INITRAMFS="$(basename "$INITRAMFS_URL")"
 check_url "Initramfs" "$INITRAMFS_URL" "$INITRAMFS"
 
 # Detect RHCOS image type based on kernel/initramfs type
 export IMAGE
-if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
-    IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
-elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
-    IMAGE="$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")"
-else
-    err "Unhandled RHCOS configuration (neither live-rootfs or installer), exiting..."
-fi
-is_canonical && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
+IMAGE_URL="$(rhcos_stream_retrieve rootfs)"
+IMAGE="$(basename "$IMAGE_URL")"
+#if [[ "$KERNEL" =~ "live" && "$INITRAMFS" =~ "live" ]]; then
+#    IMAGE="$(lookup_release_file "RHCOS live image" "${RHCOS_MIRROR}/${urldir}/" "live-rootfs")"
+#elif [[ "$KERNEL" =~ "installer" && "$INITRAMFS" =~ "installer" ]]; then
+#    IMAGE="$(lookup_release_file "RHCOS metal image" "${RHCOS_MIRROR}/${urldir}/" "metal")"
+#else
+#    err "Unhandled RHCOS configuration (neither live-rootfs or installer), exiting..."
+#fi
+# is_canonical && IMAGE_URL="${RHCOS_MIRROR}${urldir}/${IMAGE}" || IMAGE_URL="${RHCOS_MIRROR}/${urldir}/${IMAGE}"
 check_url "Image" "$IMAGE_URL" "$IMAGE"
 
 export RHCOS_NORMALIZED_VER

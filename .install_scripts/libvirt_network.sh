@@ -68,8 +68,14 @@ if [[ -n "$VIR_NET_OCT" ]]; then
     export VIR_NET="ocp-${VIR_NET_OCT}"
 fi
 
+echo -n "====> Starting/Enabling libvirt network $VIR_NET for autostart -- "
+virsh net-start "${VIR_NET}" >/dev/null 2>&1 || err "Failed to start $VIR_NET libvirt network"
+virsh net-autostart "${VIR_NET}" >/dev/null 2>&1 || err "Failed to enable $VIR_NET libvirt network for autostart"
+ok
+
 # Retrieve the bridge name and gateway IP for the network
 echo -n "====> Retrieving network bridge and gateway IP -- "
 LIBVIRT_BRIDGE=$(virsh net-info "${VIR_NET}" | awk '/^Bridge:/ {print $2}')
 LIBVIRT_GWIP=$(ip -f inet addr show "${LIBVIRT_BRIDGE}" | awk '/inet / {print $2}' | cut -d '/' -f1)
+[ -n "${LIBVIRT_GWIP}" ] || err "Network - Unable to retrieve $VIR_NET GatewayIP! Ensure network is started and reachable..."
 ok "Bridge: ${LIBVIRT_BRIDGE}, Gateway IP: ${LIBVIRT_GWIP}"

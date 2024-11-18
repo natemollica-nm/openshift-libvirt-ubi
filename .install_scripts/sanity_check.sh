@@ -108,8 +108,8 @@ check_libvirt_services() {
         systemctl -q is-active "virt${service}d" || systemctl -q is-enabled "virt${service}d" || \
             err "virt${service}d is not running nor enabled"
         systemctl restart "virt${service}d" || err "Failed to restart virt${service}d"
-        ok
     done
+    ok
 }
 
 # Function to check for existing VMs

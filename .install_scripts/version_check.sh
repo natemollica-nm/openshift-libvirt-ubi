@@ -37,7 +37,7 @@ is_canonical() {
 
 download_openshift_installer() {
     echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
-    tar -xf "${CACHE_DIR}/${INSTALLER}" -d /tmp && rm -f /tmp/README.md
+    tar -xf "${CACHE_DIR}/${INSTALLER}" -C /tmp && rm -f /tmp/README.md
 }
 
 ## Obtain RHCOS kernel, initramfs, and rootfs files

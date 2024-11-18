@@ -69,8 +69,8 @@ if [[ -n "$VIR_NET_OCT" ]]; then
 fi
 
 echo -n "====> Starting/Enabling libvirt network $VIR_NET for autostart -- "
-virsh net-start "${VIR_NET}" >/dev/null 2>&1 || err "Failed to start $VIR_NET libvirt network"
-virsh net-autostart "${VIR_NET}" >/dev/null 2>&1 || err "Failed to enable $VIR_NET libvirt network for autostart"
+virsh net-start "${VIR_NET}" >/dev/null 2>&1 || true
+virsh net-autostart "${VIR_NET}" >/dev/null 2>&1 || true
 ok
 
 # Retrieve the bridge name and gateway IP for the network

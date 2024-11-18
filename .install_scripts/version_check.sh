@@ -14,7 +14,7 @@ check_url() {
     local url="$2"
     local file="$3"
 
-    echo "====> Checking if ${name} URL is downloadable: "
+    echo -n "====> Checking if ${name} URL is downloadable: "
     download check "$file" "$url"
 }
 
@@ -33,6 +33,13 @@ lookup_release_file() {
 # Function for checking "latest" or "stable" canonical versioning
 is_canonical() {
   [[ "$OCP_VERSION" == "latest" || "$OCP_VERSION" == "stable" ]]
+}
+
+download_ocp_tools() {
+    echo -n "====> Downloading OpenShift Client: "; download get "$CLIENT" "$CLIENT_URL"
+    echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
+    tar -xf "${CACHE_DIR}/${CLIENT}" && rm -f README.md
+    tar -xf "${CACHE_DIR}/${INSTALLER}" && rm -f README.md
 }
 
 ## Obtain RHCOS kernel, initramfs, and rootfs files
@@ -74,6 +81,8 @@ INSTALLER_URL="${OCP_MIRROR}/${urldir}/${INSTALLER}"
 check_url "Installer" "$INSTALLER_URL" "$INSTALLER"
 
 OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/')
+
+download_ocp_tools
 
 # Determine RHCOS release version
 if [[ -z "$RHCOS_VERSION" ]]; then

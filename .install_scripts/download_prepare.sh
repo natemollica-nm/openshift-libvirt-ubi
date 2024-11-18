@@ -40,10 +40,10 @@ setup_ssh_key() {
 
 # Function to download necessary OpenShift files
 download_files() {
-    echo -n "====> Downloading OpenShift Client: "; download get "$CLIENT" "$CLIENT_URL"
-    echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
-    tar -xf "${CACHE_DIR}/${CLIENT}" && rm -f README.md
-    tar -xf "${CACHE_DIR}/${INSTALLER}" && rm -f README.md
+#    echo -n "====> Downloading OpenShift Client: "; download get "$CLIENT" "$CLIENT_URL"
+#    echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
+#    tar -xf "${CACHE_DIR}/${CLIENT}" && rm -f README.md
+#    tar -xf "${CACHE_DIR}/${INSTALLER}" && rm -f README.md
 
     echo -n "====> Downloading RHCOS Image: "; download get "$IMAGE" "$IMAGE_URL"
     echo -n "====> Downloading RHCOS Kernel: "; download get "$KERNEL" "$KERNEL_URL"

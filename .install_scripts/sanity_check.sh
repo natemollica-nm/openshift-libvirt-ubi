@@ -36,16 +36,16 @@ check_dependencies() {
         if ! command -v "$cmd" >/dev/null 2>&1; then
             echo "      *==> Dependency $cmd not found."
             install_dependency "$cmd"
-        else
-            ok "      *==> $cmd found."
         fi
     done
+    ok
 
     # Verify libvirt_driver_network.so existence
+    echo "====> Checking libvirt network driver dependency: "
     if ! find /usr -type f -name libvirt_driver_network.so >/dev/null 2>&1; then
-        err "libvirt_driver_network.so not found. Please install the libvirt package."
+        err "      *==> libvirt_driver_network.so not found. Please install the libvirt package."
     else
-        ok "libvirt_driver_network.so found."
+        ok "      *==> libvirt_driver_network.so found."
     fi
 }
 

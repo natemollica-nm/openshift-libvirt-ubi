@@ -68,7 +68,7 @@ if [[ -n "$VIR_NET_OCT" ]]; then
     export VIR_NET="ocp-${VIR_NET_OCT}"
 fi
 
-echo -n "====> Starting/Enabling libvirt network $VIR_NET for autostart -- "
+echo -n "====> Starting/Enabling libvirt network $VIR_NET for autostart: "
 virsh net-start "${VIR_NET}" >/dev/null 2>&1 || true
 virsh net-autostart "${VIR_NET}" >/dev/null 2>&1 || true
 ok

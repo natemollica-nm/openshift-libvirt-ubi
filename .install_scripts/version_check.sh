@@ -56,7 +56,12 @@ else
     [[ "$(echo "$OCP_VERSION" | cut -d '.' -f1)" == "4" ]] || err "Invalid OpenShift version $OCP_VERSION"
     OCP_VER=$(echo "$OCP_VERSION" | cut -d '.' -f1-2)
     OCP_MINOR=$(echo "$OCP_VERSION" | cut -d '.' -f3- || echo "stable")
-    urldir="${OCP_VER}.${OCP_MINOR}"
+    if [[ "$OCP_MINOR" == "latest" || "$OCP_MINOR" == "stable" ]]
+    then
+        urldir="${OCP_MINOR}-${OCP_VER}"
+    else
+        urldir="${OCP_VER}.${OCP_MINOR}"
+    fi
 fi
 
 # OpenShift client and installer download links

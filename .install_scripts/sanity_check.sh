@@ -31,7 +31,7 @@ install_dependency() {
 
 # Function to check for required executables
 check_dependencies() {
-    echo "====> Checking dependencies: "
+    echo -n "====> Checking dependencies: "
     for cmd in "${!dependencies[@]}"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             echo "      *==> Dependency $cmd not found."
@@ -41,7 +41,7 @@ check_dependencies() {
     ok
 
     # Verify libvirt_driver_network.so existence
-    echo "====> Checking libvirt network driver dependency: "
+    echo -n "====> Checking libvirt network driver dependency: "
     if ! find /usr -type f -name libvirt_driver_network.so >/dev/null 2>&1; then
         err "libvirt_driver_network.so not found. Please install the libvirt package."
     else

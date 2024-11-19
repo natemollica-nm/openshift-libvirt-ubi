@@ -36,8 +36,13 @@ is_canonical() {
 }
 
 download_openshift_installer() {
-    echo -n "====> Downloading OpenShift Installer: "; download get "$INSTALLER" "$INSTALLER_URL"
-    tar -xf "${CACHE_DIR}/${INSTALLER}" -C /tmp && rm -f /tmp/README.md
+    local installer="$1"
+    local url="$2"
+    local cache_dir="$3"
+
+    echo -n "====> Downloading OpenShift Installer: "; download get "$installer" "$url"
+    tar -xf "${cache_dir}/${installer}" -C /tmp/ && rm -f /tmp/README.md
+    test -f /tmp/openshift-install || return 1
 }
 
 ## Obtain RHCOS kernel, initramfs, and rootfs files
@@ -80,7 +85,7 @@ check_url "Installer" "$INSTALLER_URL" "$INSTALLER"
 
 OCP_NORMALIZED_VER=$(echo "${INSTALLER}" | sed 's/.*-\(4\..*\)\.tar.*/\1/')
 
-download_openshift_installer
+download_openshift_installer "${INSTALLER}" "$INSTALLER_URL" "${CACHE_DIR}" || err "Failed to download/extract 'openshift-install' from ${INSTALLER_URL}"
 
 # Determine RHCOS release version
 if [[ -z "$RHCOS_VERSION" ]]; then
@@ -143,6 +148,6 @@ echo "                    RHCOS Image = $IMAGE_URL (image: $IMAGE)"
 echo "                   Kernel Image = $KERNEL_URL"
 echo "                Initramfs Image = $INITRAMFS_URL"
 echo
-
+rm /tmp/openshift-install >/dev/null 2>&1 || true
 # Prompt user to continue
 check_if_we_can_continue

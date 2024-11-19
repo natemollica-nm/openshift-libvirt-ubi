@@ -50,7 +50,7 @@ rhcos_stream_retrieve() {
 
     local pattern="${rhcos_file}${delim}"
 
-    ./openshift-install coreos print-stream-json | grep -Eo "https.*(${pattern})\w+(\.img)?" | grep "$(arch)"
+    ./tmp/openshift-install coreos print-stream-json | grep -Eo "https.*(${pattern})\w+(\.img)?" | grep "$(arch)"
 }
 
 export OCP_VER

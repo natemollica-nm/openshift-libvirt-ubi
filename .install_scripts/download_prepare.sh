@@ -41,7 +41,7 @@ setup_ssh_key() {
 # Function to download necessary OpenShift files
 download_files() {
     echo -n "====> Copying OpenShift Installer (installed previously...): "
-    cp /tmp/openshift-install ./openshift-install || err "Failed to copy openshift-install, exiting..."
+    mv /tmp/openshift-install ./openshift-install || err "Failed to copy openshift-install, exiting..."
     ok
     echo -n "====> Downloading OpenShift Client: "; download get "$CLIENT" "$CLIENT_URL"
     tar -xf "${CACHE_DIR}/${CLIENT}" && rm -f README.md

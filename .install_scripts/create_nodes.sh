@@ -1,9 +1,9 @@
 #!/bin/bash
 
 echo 
-echo "############################################"
+echo "#############################################"
 echo "#### CREATE BOOTSTRAPPING RHCOS/OCP NODES ###"
-echo "############################################"
+echo "#############################################"
 echo 
 
 declare -A ip_addresses
@@ -34,7 +34,7 @@ create_vm() {
         --ram "${memory}" \
         --vcpus "${vcpus}" \
         --os-variant rhel9.2 \
-        --disk "${disk},size=50" \
+        --disk "${disk},size=50,serial=${vm_name}-disk" \
         --location rhcos-install/ \
         --network network="${VIR_NET}",model=virtio \
         --extra-args "${ignition_args}" \
@@ -171,10 +171,10 @@ verify_dns_resolution() {
         resolved_ip=$(nslookup "$fqdn" | grep -A1 "Name:" | grep "Address" | awk '{print $2}' 2> /dev/null)
 
         if [[ "$resolved_ip" == "$expected_ip" ]]; then
-            echo " *==> $resolved_ip"
+            ok
             break
         elif [[ -n "$resolved_ip" ]] && [[ "$resolved_ip" != "$expected_ip" ]]; then
-            echo " *==> $resolved_ip (INVALID!)"
+            err " Invalid address resolution for ${vm_name} *==> $resolved_ip"
             break
         else
             echo -n "."

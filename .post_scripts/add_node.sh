@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
         --name) NODE="$2"; shift 2 ;;
         -c|--cpu) [[ "$2" =~ ^[0-9]+$ ]] && CPU="$2" || err "Invalid CPU count: $2"; shift 2 ;;
         -m|--memory) [[ "$2" =~ ^[0-9]+$ ]] && MEM="$2" || err "Invalid memory size: $2"; shift 2 ;;
-        -a|--add-disk) [[ "$2" =~ ^[0-9]+$ ]] && ADD_DISK+=" --disk ${VM_DIR}/${CLUSTER_NAME}-${NODE}-${2}GB-$(shuf -zer -n5 {a..z} | tr -d '\0').qcow2,size=${2}" || err "Invalid disk size: $2"; shift 2 ;;
+        -a|--add-disk) [[ "$2" =~ ^[0-9]+$ ]] && ADD_DISK+=" --disk ${VM_DIR}/${CLUSTER_NAME}-${NODE}-${2}GB-$(shuf -zer -n5 {a..z} | tr -d '\0').qcow2,size=${2},serial=${CLUSTER_NAME}-${NODE}-disk" || err "Invalid disk size: $2"; shift 2 ;;
         -N|--libvirt-oct) [[ "$2" -gt 0 && "$2" -lt 255 ]] && VIR_NET_OCT="$2" || err "Invalid subnet octet: $2"; shift 2 ;;
         -n|--libvirt-network) VIR_NET="$2"; shift 2 ;;
         -v|--vm-dir) VM_DIR="$2"; shift 2 ;;

@@ -52,6 +52,7 @@ patch_ingress_controller() {
 
 # Function to approve pending CSRs
 approve_pending_csrs() {
+    local csr
     for csr in $(./oc get csr 2> /dev/null | grep -w 'Pending' | awk '{print $1}'); do
         echo "  --> Approving CSR: $csr"
         ./oc adm certificate approve "$csr" &> /dev/null || true

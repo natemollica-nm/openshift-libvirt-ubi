@@ -30,7 +30,7 @@ remove_vm() {
 }
 
 # Remove all relevant VMs
-for vm in $(virsh list --all --name | grep "${CLUSTER_NAME}-lb\|${CLUSTER_NAME}-master-\|${CLUSTER_NAME}-worker-\|${CLUSTER_NAME}-bootstrap"); do
+for vm in $(virsh list --all --name | grep "${CLUSTER_NAME}"); do
     remove_vm "$vm"
 done
 

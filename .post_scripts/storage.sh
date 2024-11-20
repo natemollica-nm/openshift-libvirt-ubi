@@ -14,6 +14,8 @@ ok
 #### https://docs.openshift.com/container-platform/4.17/storage/persistent_storage/persistent_storage_local/persistent-storage-local.html
 oc adm new-project openshift-local-storage
 oc annotate namespace openshift-local-storage openshift.io/node-selector=''
+oc annotate namespace consul openshift.io/node-selector=''
+oc annotate namespace default openshift.io/node-selector=''
 
 
 cat <<EOF | oc apply -f -
@@ -25,8 +27,6 @@ metadata:
 spec:
   targetNamespaces:
     - openshift-local-storage
-    - consul
-    - default
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -67,9 +67,9 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - storage-1.ocp-01.local
-          - storage-2.ocp-01.local
-          - storage-3.ocp-01.local
+          - storage-1.${CLUSTER_NAME}.${BASE_DOM}
+          - storage-2.${CLUSTER_NAME}.${BASE_DOM}
+          - storage-3.${CLUSTER_NAME}.${BASE_DOM}
   storageClassDevices:
     - storageClassName: "local-sc"
       forceWipeDevicesAndDestroyAllData: true

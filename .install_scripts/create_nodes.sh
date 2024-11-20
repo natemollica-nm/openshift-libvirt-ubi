@@ -22,6 +22,10 @@ create_vm() {
     local disk="$4"
     local ignition_url="$5"
 
+    # Generate a 9-digit random serial ID
+    local serial_id
+    serial_id=$(printf "%09d" $((RANDOM % 1000000000)))
+
     local ignition_args="nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda ${RHCOS_I_ARG}=http://${LBIP}:${WS_PORT}/${IMAGE} coreos.inst.ignition_url=${ignition_url}"
     # virt-install --os-variant list | grep rhel
     # https://access.redhat.com/articles/6907891
@@ -34,7 +38,7 @@ create_vm() {
         --ram "${memory}" \
         --vcpus "${vcpus}" \
         --os-variant rhel9.2 \
-        --disk "${disk},size=50,serial=${vm_name}-disk" \
+        --disk "${disk},size=50,serial=${vm_name}-disk-${serial_id}" \
         --location rhcos-install/ \
         --network network="${VIR_NET}",model=virtio \
         --extra-args "${ignition_args}" \

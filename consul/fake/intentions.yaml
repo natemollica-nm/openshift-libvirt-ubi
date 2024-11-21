@@ -1,0 +1,68 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: backend
+spec:
+  destination:
+    name: backend
+    namespace: consul
+  sources:
+    - name: frontend
+      namespace: consul
+      action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: frontend
+spec:
+  destination:
+    name: frontend
+    namespace: consul
+  sources:
+    - name: api-gateway
+      namespace: consul
+      action: allow
+    - name: ingress-gateway-frontend
+      namespace: default
+      action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: default-all
+spec:
+  destination:
+    name: "*"
+    namespace: default
+  sources:
+    - name: backend
+      namespace: consul
+      action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: frontend-apk
+spec:
+  destination:
+    name: apk-package-repo
+    namespace: default
+  sources:
+    - name: frontend
+      namespace: consul
+      action: allow
+---
+#apiVersion: consul.hashicorp.com/v1alpha1
+#kind: ServiceIntentions
+#metadata:
+#  name: consul
+#spec:
+#  destination:
+#    name: consul
+#    namespace: default
+#  sources:
+#    - name: frontend
+#      namespace: consul
+#      action: allow
+---

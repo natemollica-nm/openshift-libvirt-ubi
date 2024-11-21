@@ -4,7 +4,7 @@
 create_env_file() {
     cat <<EOF > env
 # OCP4 Automated Install Environment
-# Repository: https://github.com/kxr/ocp4_setup_upi_kvm
+# Repository: https://github.com/natemollica-nm/openshift-libvirt-ubi
 # Script location: ${SDIR}
 # Script invoked with: ${SINV}
 # OpenShift version: ${OCP_NORMALIZED_VER}
@@ -53,6 +53,24 @@ copy_post_scripts() {
     fi
 }
 
+# Function to copy scripts if they exist
+copy_directory() {
+    local source_dir="$1"
+    local dest_dir="${SETUP_DIR}"
+
+    if [[ -d "${source_dir}" ]]; then
+        [[ -d "${dest_dir}" ]] || mkdir -p "${dest_dir}"
+        cp -a "${source_dir}"/. "${dest_dir}"/ || {
+            echo "Warning: Failed to copy directory ${source_dir} to ${dest_dir}."
+            return 1
+        }
+        echo "Directory copied from ${source_dir} to ${dest_dir}."
+    else
+        echo "Warning: No directory found at ${source_dir}."
+    fi
+}
+
 # Execute the functions
 create_env_file
 copy_post_scripts
+copy_directory consul

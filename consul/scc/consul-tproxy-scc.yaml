@@ -1,0 +1,104 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: consul-tproxy-scc
+  annotations:
+    kubernetes.io/description: consul-tproxy-scc enables traffic-redirection capabilities
+      for users 5995 and 5996 of the consul-dataplane and connect-init containers for any
+      application sidecar. The permissions are simply the default built-in nonroot-v2 permissions
+      which are restricted-v2 permissions, but allows users to run with any non-root UID.
+      
+      Apply this to each application namespace that is using the consul service-mesh.
+      
+      This SCC adds the NET_BIND_SERVICE to defaultAddCapabilities for the proxy init process to complete
+      successfully.
+# ===================================================== #
+#      OpenShift + CNI + Transparent Proxy Enabled
+#      connect-inject-init | consul-dataplane SCC
+# ===================================================== #
+#   - UID 5996 (connect-init)
+#   - UID 5995 (consul-dataplane)
+# consul-connect-inject-init:
+#       securityContext:
+#        capabilities:
+#          add:
+#            - NET_BIND_SERVICE
+#          drop:
+#            - ALL
+#        privileged: false
+#        runAsUser: 5996
+#        runAsGroup: 5996
+#        runAsNonRoot: true
+#        readOnlyRootFilesystem: true
+#        allowPrivilegeEscalation: false
+#
+# consul-dataplane:
+#      securityContext:
+#        capabilities:
+#          add:
+#            - NET_BIND_SERVICE
+#          drop:
+#            - ALL
+#        runAsUser: 5995
+#        runAsGroup: 5995
+#        runAsNonRoot: true
+#        readOnlyRootFilesystem: true
+#        allowPrivilegeEscalation: false
+# ================================================ #
+defaultAddCapabilities:
+  - NET_BIND_SERVICE
+# ======================== #
+# restricted-v2 Defaults
+# ======================== #
+priority: null
+allowHostIPC: false
+allowHostPID: false
+allowHostPorts: false
+allowHostNetwork: false
+readOnlyRootFilesystem: false    # Set to true in your environment if the app doesn't require root access. Not a requirement for consul to be false.
+allowPrivilegeEscalation: true
+allowHostDirVolumePlugin: false
+allowPrivilegedContainer: false
+
+allowedCapabilities:
+  - NET_BIND_SERVICE
+
+requiredDropCapabilities:
+  - ALL
+
+seLinuxContext:
+  type: MustRunAs
+
+# supported values: "MustRunAs", "RunAsAny"
+supplementalGroups:
+  type: RunAsAny
+
+seccompProfiles:
+  - runtime/default
+#groups:
+#  - system:cluster-admins
+users: []
+
+volumes:
+  - configMap
+  - csi
+  - downwardAPI
+  - emptyDir
+  - ephemeral
+  - persistentVolumeClaim
+  - projected
+  - secret
+
+runAsUser:
+  type: MustRunAsNonRoot
+
+# supported values: "MustRunAs", "RunAsAny"
+# By default, no range is explicitly defined for fsGroup, instead, by default, fsGroup is
+# equal to the minimum value of the “openshift.io/sa.scc.supplemental-groups” annotation
+# oc get pod -n consul -o jsonpath='{range .items[*]}{@.metadata.name}{" runAsUser: "}{@.spec.containers[*].securityContext.runAsUser}{" fsGroup: "}{@.spec.securityContext.fsGroup}{" seLinuxOptions: "}{@.spec.securityContext.seLinuxOptions.level}{"\n"}{end}'
+fsGroup:
+  type: MustRunAs
+# ======================== #
+# nonroot-v2 Defaults
+# ======================== #
+

@@ -4,9 +4,9 @@ echo -n "====> Labeling ${NODE}.${CLUSTER_NAME}.${BASE_DOM} node with cluster.oc
 oc label node "${NODE}"."${CLUSTER_NAME}"."${BASE_DOM}" cluster.ocs.openshift.io/openshift-storage='' || err "failed labeling ${NODE}.${CLUSTER_NAME}.${BASE_DOM}"
 ok
 
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name storage-1
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name storage-2
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name storage-3
+./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
+./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
+./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6
 
 #################################################
 #### Persistent storage using local volumes #####
@@ -14,8 +14,8 @@ ok
 #### https://docs.openshift.com/container-platform/4.17/storage/persistent_storage/persistent_storage_local/persistent-storage-local.html
 oc adm new-project openshift-local-storage
 oc annotate namespace openshift-local-storage openshift.io/node-selector=''
-oc annotate namespace consul openshift.io/node-selector=''
-oc annotate namespace default openshift.io/node-selector=''
+oc annotate namespace openshift-local-storage workload.openshift.io/allowed='management'
+
 
 
 cat <<EOF | oc apply -f -
@@ -67,9 +67,9 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - storage-1.${CLUSTER_NAME}.${BASE_DOM}
-          - storage-2.${CLUSTER_NAME}.${BASE_DOM}
-          - storage-3.${CLUSTER_NAME}.${BASE_DOM}
+          - worker-4.${CLUSTER_NAME}.${BASE_DOM}
+          - worker-5.${CLUSTER_NAME}.${BASE_DOM}
+          - worker-6.${CLUSTER_NAME}.${BASE_DOM}
   storageClassDevices:
     - storageClassName: "local-sc"
       forceWipeDevicesAndDestroyAllData: true
@@ -83,7 +83,7 @@ cat <<EOF | oc apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: local-storage
+  name: local-sc
 provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
 volumeBindingMode: WaitForFirstConsumer
 EOF

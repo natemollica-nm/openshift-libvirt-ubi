@@ -1,0 +1,36 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: frontend
+  namespace: consul
+  labels:
+    app: frontend
+spec:
+  parentRefs:
+    - name: api-gateway
+      namespace: consul
+  rules:
+    - backendRefs:
+        - kind: Service
+          name: frontend
+          namespace: consul
+          port: 9090
+        - group: consul.hashicorp.com
+          kind: MeshService
+          name: frontend
+          namespace: consul
+---
+#apiVersion: gateway.networking.k8s.io/v1alpha2
+#kind: TCPRoute
+#metadata:
+#  name: frontend
+#  namespace: consul
+#spec:
+#  parentRefs:                 # Defines the gateway listener.
+#    - name: api-gateway
+#      namespace: consul
+#      sectionName: frontend-tcp-listener
+#  rules:
+#    - backendRefs:       # Defines the backend service.
+#        - kind: Service  # Kubernetes Service.
+#          name: frontend # Kubernetes Service name that points to the Consul Mesh service.

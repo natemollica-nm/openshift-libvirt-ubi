@@ -1,0 +1,24 @@
+# https://docs.openshift.com/container-platform/4.14/networking/routes/route-configuration.html#nw-ingress-creating-a-route-via-an-ingress_route-configuration
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway
+  namespace: consul
+  labels:
+    app: api-gateway
+  annotations:
+    route.openshift.io/termination: "edge"
+spec:
+  rules:
+    - host: frontend.$OPENSHIFT_INGRESS_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 2080
+  tls:
+    - {}

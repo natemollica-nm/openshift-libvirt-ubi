@@ -1,0 +1,25 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: api-gateway
+  namespace: consul
+spec:
+  gatewayClassName: consul
+  listeners:
+    - name: frontend
+      protocol: HTTP # options: HTTP | HTTPS | TCP
+      port: 2080     # options: OpenShift needs extra permission to set port num < 1024
+      allowedRoutes:
+        namespaces:
+          from: "Same"  # options: All or Same or Specific
+#    - name: frontend-tcp-listener
+#      protocol: TCP
+#      port: 2080
+#      allowedRoutes:
+#        kinds:
+#          - kind: TCPRoute
+#        namespaces:
+#          from: Selector
+#          selector:
+#            matchLabels:
+#              kubernetes.io/metadata.name: consul

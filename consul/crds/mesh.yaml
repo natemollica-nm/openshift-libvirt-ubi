@@ -1,0 +1,21 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: Mesh
+metadata:
+  name: mesh
+spec:
+  transparentProxy:
+    meshDestinationsOnly: true
+  peering:
+    peerThroughMeshGateways: true
+  tls:
+    outgoing:
+      tlsMinVersion: "TLSv1_0"
+      tlsMaxVersion: "TLSv1_3"
+    incoming:
+      tlsMinVersion: "TLS_AUTO"
+      tlsMaxVersion: "TLS_AUTO"
+  http:
+    sanitizeXForwardedClientCert: false
+#    incoming:
+#      requestNormalization:
+#        insecureDisablePathNormalization: true

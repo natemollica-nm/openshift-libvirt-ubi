@@ -1,0 +1,13 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ProxyDefaults
+metadata:
+  name: global
+spec:
+  meshGateway:
+    mode: local
+  prioritizeByLocality:
+    mode: failover
+  config:
+    protocol: "http"
+    envoy_dns_discovery_type: "STRICT_DNS"
+---

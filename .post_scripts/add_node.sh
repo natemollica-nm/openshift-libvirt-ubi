@@ -6,11 +6,8 @@
 err() { echo -e "\n\e[97m\e[101m[ERROR]\e[0m ${1}\n" >&2; exit 1; }
 ok() { echo -e "${1:-ok}"; }
 
-# Force the script to run as root
-if [[ "$EUID" -ne 0 ]]; then
-  echo "This script must be run as root. Restarting with sudo..."
-  exec sudo "$0" "$@"
-fi
+# Ensure the script is run as root
+[[ "$(whoami)" != "root" ]] && exec sudo "$0" "$@"
 
 set -e
 
@@ -66,27 +63,25 @@ done
 # Validate required arguments
 [[ -z "$NODE" ]] && err "Node name is required. Use --name <node-name>."
 
-# Ensure the script is run as root
-[[ "$(whoami)" != "root" ]] && exec sudo "$0" "$@"
-
 # Check if libvirt services are running/enabled
 check_libvirt_services() {
     local service
+    echo -n "====> Checking if libvirt services are enabled and running: "
     for service in qemu interface network nodedev nwfilter secret storage; do
-        echo -n "====> Checking if virt${service}d is running or enabled: "
         systemctl -q is-active virt${service}d || systemctl -q is-enabled virt${service}d || err "virt${service}d is not running or enabled"
-        ok
     done
+    ok
 }
 
 # Create or verify libvirt network
 setup_libvirt_network() {
+    echo -n "====> Verifying libvirt network: "
     if [[ -n "$VIR_NET_OCT" ]]; then
         if virsh net-uuid "ocp-${VIR_NET_OCT}" &> /dev/null; then
             VIR_NET="ocp-${VIR_NET_OCT}"
             ok "Reusing ocp-${VIR_NET_OCT}"
         else
-            echo "Creating new network ocp-${VIR_NET_OCT} (192.168.${VIR_NET_OCT}.0/24)"
+            echo -n "Creating new network ocp-${VIR_NET_OCT} (192.168.${VIR_NET_OCT}.0/24): "
             cp /usr/share/libvirt/networks/default.xml /tmp/new-net.xml || err "Failed to copy network template"
             sed -i "s/default/ocp-${VIR_NET_OCT}/; s/virbr0/ocp-${VIR_NET_OCT}/; s/122/${VIR_NET_OCT}/g" /tmp/new-net.xml
             virsh net-define /tmp/new-net.xml || err "Failed to define network"
@@ -94,10 +89,11 @@ setup_libvirt_network() {
             virsh net-start "ocp-${VIR_NET_OCT}" || err "Failed to start network"
             systemctl restart virtnetworkd || err "Failed to restart libvirtd"
             VIR_NET="ocp-${VIR_NET_OCT}"
+            ok
         fi
     elif [[ -n "$VIR_NET" ]]; then
         virsh net-uuid "$VIR_NET" &> /dev/null || err "Network $VIR_NET does not exist"
-        ok "Using existing network $VIR_NET"
+        ok "Using existing network '$VIR_NET'"
     else
         err "No network specified. Use --libvirt-oct or --libvirt-network"
     fi
@@ -148,11 +144,11 @@ add_dhcp_and_dns_entry() {
         err "Failed to add DHCP reservation for ${vm_name}"
     ok
 
-    echo -n "====> Adding ${vm_name} entry to /etc/hosts.${CLUSTER_NAME}: "
+    echo -n "    *==> Adding ${vm_name} entry to /etc/hosts.${CLUSTER_NAME}: "
     echo "$ip $dns_name.${CLUSTER_NAME}.${BASE_DOM}" >> "/etc/hosts.${CLUSTER_NAME}" || err "Failed to add hosts entry"
     ok
 
-    echo -n "  ==> Adding /etc/hosts entry: "
+    echo -n "    *==> Adding /etc/hosts entry: "
     echo "$ip ${NODE}.${CLUSTER_NAME}.${BASE_DOM}" >> /etc/hosts || err "failed"; ok
 }
 
@@ -223,27 +219,29 @@ verify_dns_resolution() {
 
 # Approve CSRs automatically
 approve_csrs() {
-    echo "====> Approving CSRs (2 CSR per node)..."; echo
+    echo
+    echo "============== Node CSR Approval =============="
+    sleep 15
     while true; do
-        # Get the list of pending CSRs
+        echo -n "====> Retrieving pending CSRs (2 CSR per node) for approval: "
+        # Wait a few seconds before checking again
+        sleep 5
+        # Get the list of pending CSRs into an array
         local pending_csrs
-        pending_csrs=$(oc get csr | grep Pending | awk '{print $1}')
-
+        mapfile -t pending_csrs < <(oc get csr | grep Pending | awk '{print $1}')
+        echo "${#pending_csrs[@]} found"
         # If no pending CSRs remain, exit the loop
-        if [[ -z "${pending_csrs}" ]]; then
+        if [[ ${#pending_csrs[@]} -eq 0 ]]; then
             echo "====> All CSRs have been approved."
             break
         fi
-
-        # Approve each pending CSR
+        # Approve each pending CSR from the array
         local csr
-        for csr in ${pending_csrs}; do
-            echo "Approving CSR: ${csr}"
-            oc adm certificate approve "${csr}"
+        for csr in "${pending_csrs[@]}"; do
+            echo -n "  ==> Approving CSR '${csr}': "
+            oc adm certificate approve "${csr}" >/dev/null 2>&1 || err "Failed to approving ${csr}"
+            ok
         done
-
-        # Wait a few seconds before checking again
-        sleep 5
     done
 }
 
@@ -268,4 +266,4 @@ start_vm_with_dhcp "${CLUSTER_NAME}-${NODE}" "${NODE}"
 restart_services
 verify_dns_resolution "${NODE}" "${ip_addresses[${CLUSTER_NAME}-${NODE}]}"
 approve_csrs
-echo "====> ${NODE} successfully added to ${CLUSTER_NAME} cluster!"
+echo "====> OpenShift Node '${NODE}' successfully added to ${CLUSTER_NAME} cluster!"

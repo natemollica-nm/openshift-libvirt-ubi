@@ -73,4 +73,4 @@ copy_directory() {
 # Execute the functions
 create_env_file
 copy_post_scripts
-copy_directory consul
+copy_directory "${SDIR}"/consul

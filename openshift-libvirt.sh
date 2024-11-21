@@ -36,7 +36,6 @@ if [ "${DESTROY}" == "yes" ]; then
     exit 0
 fi
 
-## https://www.libguestfs.org/guestfs.3.html#backend
 # Connect to system via qemu driver in libvirt
 #  - avoids having to use export LIBGUESTFS_BACKEND=direct
 virsh connect qemu:///system

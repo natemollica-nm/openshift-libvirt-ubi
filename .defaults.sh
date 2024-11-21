@@ -25,7 +25,7 @@ export MAS_CPU="4"
 export MAS_MEM="16000"
 
 # --worker-cpu N(vCPU)
-export WOR_CPU="4"
+export WOR_CPU="8"
 
 # --worker-mem SIZE(MB)
 export WOR_MEM="16000"

@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-echo -n "====> Labeling ${NODE}.${CLUSTER_NAME}.${BASE_DOM} node with cluster.ocs.openshift.io/openshift-storage='' "
-oc label node "${NODE}"."${CLUSTER_NAME}"."${BASE_DOM}" cluster.ocs.openshift.io/openshift-storage='' || err "failed labeling ${NODE}.${CLUSTER_NAME}.${BASE_DOM}"
-ok
-
 ./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
 ./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
 ./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6

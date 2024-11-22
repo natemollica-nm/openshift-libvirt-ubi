@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
-./add_node.sh --cpu 4 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6
+./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
+./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
+./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6
 
 #################################################
 #### Persistent storage using local volumes #####

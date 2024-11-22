@@ -18,61 +18,61 @@ spec:
   transparentProxy:
     dialedDirectly: true
 ---
-#apiVersion: consul.hashicorp.com/v1alpha1
-#kind: ServiceDefaults
-#metadata:
-#  name: google
-#  namespace: default
-#spec:
-#  protocol: tcp
-#  transparentProxy:
-#    dialedDirectly: true
-#  destination:
-#    port: 443
-#    addresses:
-#      - example.com
-#---
-#apiVersion: consul.hashicorp.com/v1alpha1
-#kind: ServiceDefaults
-#metadata:
-#  name: webpage
-#  namespace: default
-#spec:
-#  protocol: tcp
-#  transparentProxy:
-#    dialedDirectly: true
-#  destination:
-#    port: 443
-#    addresses:
-#      - jsonplaceholder.typicode.com
-#---
-#apiVersion: consul.hashicorp.com/v1alpha1
-#kind: ServiceDefaults
-#metadata:
-#  name: httpbin
-#  namespace: default
-#spec:
-#  protocol: tcp
-#  transparentProxy:
-#    dialedDirectly: true
-#  destination:
-#    port: 443
-#    addresses:
-#      - httpbin.org
-#---
-#apiVersion: consul.hashicorp.com/v1alpha1
-#kind: ServiceDefaults
-#metadata:
-#  name: apk-package-repo
-#  namespace: default
-#spec:
-#  protocol: tcp
-#  transparentProxy:
-#    dialedDirectly: true
-#  destination:
-#    port: 443
-#    addresses:
-#      - dl-cdn.alpinelinux.org
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: google
+  namespace: default
+spec:
+  protocol: tcp
+  transparentProxy:
+    dialedDirectly: true
+  destination:
+    port: 443
+    addresses:
+      - example.com
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: webpage
+  namespace: default
+spec:
+  protocol: tcp
+  transparentProxy:
+    dialedDirectly: true
+  destination:
+    port: 443
+    addresses:
+      - jsonplaceholder.typicode.com
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: httpbin
+  namespace: default
+spec:
+  protocol: tcp
+  transparentProxy:
+    dialedDirectly: true
+  destination:
+    port: 443
+    addresses:
+      - httpbin.org
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: apk-package-repo
+  namespace: default
+spec:
+  protocol: tcp
+  transparentProxy:
+    dialedDirectly: true
+  destination:
+    port: 443
+    addresses:
+      - dl-cdn.alpinelinux.org
 ---
 #apiVersion: consul.hashicorp.com/v1alpha1
 #kind: ServiceDefaults

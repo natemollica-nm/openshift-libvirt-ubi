@@ -244,7 +244,7 @@ for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
         }
         if [ "$(yq '.terminatingGateways.gateways[].extraVolumes' <values-ent.yaml )" != null ]; then
             info "install-consul: Creating/verifying root-tgw-certs in ns consul | ${cluster_context}"
-            kubectl --context "${cluster_context}" --namespace consul create secret generic root-tgw-certs --from-file=tgw/certs/ca-roots.pem >/dev/null 2>&1 || true
+            "${OC_PATH}" --context "${cluster_context}" --namespace consul create secret generic root-tgw-certs --from-file=tgw/certs/ca-roots.pem >/dev/null 2>&1 || true
         fi
     fi
     print_msg "install-consul: Current image settings:" \

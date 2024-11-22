@@ -62,7 +62,7 @@ apply_network_attachment_def() {
     local action="$3"
 
     info "install-consul: Applying consul-cni network-attachment-definition.yaml"
-    "${OC_PATH}" --context "$cluster_context" --namespace "$namespace" "$action" -f crds/network-attachment-definition.yaml >/dev/null 2>&1 || {
+    yq -e ".metadata.namespace = \"${namespace}\"" crds/network-attachment-definition.yaml | "${OC_PATH}" --context "$cluster_context" "$action" -f - >/dev/null 2>&1 || {
         return 1
     }
 }

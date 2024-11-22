@@ -2,7 +2,7 @@
 
 set -e
 
-eval "$(cat env)"
+eval "$(cat ../env)"
 eval "$(cat scripts/logging.sh)"
 eval "$(cat scripts/formatting.env)"
 

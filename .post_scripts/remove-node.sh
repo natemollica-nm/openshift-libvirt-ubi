@@ -102,24 +102,13 @@ remove_hosts_entries() {
     local entry="$1"
     local hosts_file="/etc/hosts"
 
-    if [[ -z "$entry" ]]; then
-        echo "Usage: remove_hosts_entries <entry>"
-        return 1
-    fi
-
-    if [[ ! -f "$hosts_file" ]]; then
-        echo "Error: $hosts_file not found!"
-        return 1
-    fi
-
     if grep -q "${entry}" "$hosts_file"; then
         check_if_we_can_continue "Removing entries in $hosts_file for $entry"
 
         echo -n "====> Removing entries in $hosts_file for $entry: "
         # Use sed to delete lines containing the entry
         sed -i "/${entry}/d" "$hosts_file" || { echo "Failed to remove entries (ignoring) ... "; return 1; }
-
-        echo "Done"
+        ok
     else
         echo "====> No matching entries found for $entry in $hosts_file."
     fi

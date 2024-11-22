@@ -69,21 +69,24 @@ remove_directory() {
 remove_directory "$SETUP_DIR"
 
 # Function to comment out cluster-related entries in /etc/hosts
-comment_hosts_entries() {
+remove_hosts_entries() {
     local entry="$1"
     local hosts_file="/etc/hosts"
 
     if grep -q "${entry}" "$hosts_file"; then
-        check_if_we_can_continue "Commenting entries in $hosts_file for $entry"
+        check_if_we_can_continue "Removing entries in $hosts_file for $entry"
 
-        echo -n "XXXX> Commenting entries in $hosts_file for $entry: "
-        sed -i "s/\(.*${entry}\)/#\1/" "$hosts_file" || echo -n "Failed to comment entries (ignoring) ... "
+        echo -n "====> Removing entries in $hosts_file for $entry: "
+        # Use sed to delete lines containing the entry
+        sed -i "/${entry}/d" "$hosts_file" || { echo "Failed to remove entries (ignoring) ... "; return 1; }
         ok
+    else
+        echo "====> No matching entries found for $entry in $hosts_file."
     fi
 }
 
 # Comment out /etc/hosts entries for the cluster
-comment_hosts_entries "${CLUSTER_NAME}.${BASE_DOM}$"
+remove_hosts_entries "${CLUSTER_NAME}.${BASE_DOM}$"
 
 # Function to remove a file if it exists
 remove_file() {

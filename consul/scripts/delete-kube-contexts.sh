@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-eval "$(cat .env)"
+eval "$(cat ../env)"
 eval "$(cat scripts/logging.sh)"
 eval "$(cat scripts/formatting.env)"
 contexts=$(oc config get-contexts --no-headers --output=name)

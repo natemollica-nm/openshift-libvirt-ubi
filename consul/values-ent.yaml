@@ -130,7 +130,7 @@ server:
   enabled: true
   logLevel: "TRACE"
   enableAgentDebug: true
-  replicas: 1
+  replicas: 3
   storage: 50Gi
   storageClass: local-sc
   persistentVolumeClaimRetentionPolicy:
@@ -152,9 +152,9 @@ server:
               - key: kubernetes.io/hostname
                 operator: In
                 values:
-                  - "storage-1.ocp-libvirt.local"
-                  - "storage-2.ocp-libvirt.local"
-                  - "storage-3.ocp-libvirt.local"
+                  - "worker-4.ocp-libvirt.local"
+                  - "worker-5.ocp-libvirt.local"
+                  - "worker-6.ocp-libvirt.local"
   extraConfig: |
     {
       "performance": {

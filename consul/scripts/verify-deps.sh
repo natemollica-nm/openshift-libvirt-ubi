@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-eval "$(cat env)"
+eval "$(cat ../env)"
 eval "$(cat scripts/formatting.env)"
 
 exit_code=0

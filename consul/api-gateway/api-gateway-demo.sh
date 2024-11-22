@@ -47,7 +47,7 @@ validate_ns() {
 
 namespace() {#!/usr/bin/env bash
 
-eval "$(cat env)"
+eval "$(cat ../env)"
 eval "$(cat scripts/logging.sh)"
 eval "$(cat scripts/formatting.env)"
 

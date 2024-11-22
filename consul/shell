@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-eval "$(cat env)"
+eval "$(cat ../env)"
 
 exec bash "$@"

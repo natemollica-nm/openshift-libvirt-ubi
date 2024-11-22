@@ -1,0 +1,15 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: backend-db
+  namespace: default
+spec:
+  protocol: tcp
+  transparentProxy:
+    dialedDirectly: true
+  destination:
+    port: 5432
+    addresses:
+      - backend-db.default.svc.cluster.local
+      - 172.31.216.12
+      - 20.131.1.42

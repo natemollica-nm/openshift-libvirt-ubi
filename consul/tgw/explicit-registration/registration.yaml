@@ -1,0 +1,21 @@
+apiVersion: consul.hashicorp.com/v1alpha1         # required
+kind: Registration                                # required
+metadata:
+  name: backend-db
+spec:
+  address: "backend.default.svc.cluster.local"
+  node: backend-db-virtual-node-0
+  partition: "$PARTITION"
+  service:
+    name: backend-db
+    port: 5432
+    namespace: default
+    partition: "$PARTITION"
+    address: "$BACKEND_DB_SVC_IP"
+    taggedAddresses:
+      lan:
+        address: "$BACKEND_DB_POD_IP"
+        port: 5432
+  locality:
+    region: "$REGION"
+    zone: "$ZONE"

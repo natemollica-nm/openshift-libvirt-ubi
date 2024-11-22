@@ -15,19 +15,19 @@ export UPGRADE="${4:-false}"
 
 
 export CONSUL_NS=consul
-export OC_PATH="$SETUP_DIR"/oc
+export OC_PATH="${SETUP_DIR}"/oc
 export OPENSHIFT_INGRESS_DOMAIN="apps.${CLUSTER_NAME}.${BASE_DOM}"
 
 
 CLUSTER1_CONTEXT="${CLUSTER_NAME}"
-CLUSTER_CONTEXTS=("$CLUSTER1_CONTEXT")
+CLUSTER_CONTEXTS=("${CLUSTER1_CONTEXT}")
 
 test -f /root/pull-secret.yaml || {
     err "install-consul: Pull secret file not found (/root/pull-secret.yaml)! Download and configure pull-secret.yaml from Redhat customer portal prior to installing Consul"
     exit
 }
 
-if [ -z "$CONSUL_LICENSE" ]; then
+if [ -z "${CONSUL_LICENSE}" ]; then
     err "install-consul: Enterprise licensing error. \$CONSUL_LICENSE not set, ensure you set this to a valid ent license prior to running"
     exit
 fi
@@ -39,12 +39,12 @@ version_greater_equal() {
 
     # Convert versions to a comparable format
     # shellcheck disable=2086
-    version1=$(echo $version1 | awk -F. '{ printf("%d%03d%03d", $1,$2,$3); }')
+    version1=$(echo ${version1} | awk -F. '{ printf("%d%03d%03d", $1,$2,$3); }')
     # shellcheck disable=2086
-    version2=$(echo $version2 | awk -F. '{ printf("%d%03d%03d", $1,$2,$3); }')
+    version2=$(echo ${version2} | awk -F. '{ printf("%d%03d%03d", $1,$2,$3); }')
 
     # Compare the versions
-    if [[ $version1 -ge $version2 ]]; then
+    if [[ ${version1} -ge ${version2} ]]; then
         return 0 # True
     else
         return 1 # False
@@ -52,7 +52,7 @@ version_greater_equal() {
 }
 
 enableHelmRepo() {
-    info "helm: Clearing helm repository cache from $HOME/Library/Caches/helm/repository"
+    info "helm: Clearing helm repository cache from ${HOME}/Library/Caches/helm/repository"
     rm -rf "${HOME}"/Library/Caches/helm/repository/* || true
     sleep 2
     info "helm: Adding https://helm.releases.hashicorp.com and updating"
@@ -67,7 +67,7 @@ is_helm_release_installed() {
     local cluster_context="$3"
 
     # Run 'helm list' and check if the release exists in the specified namespace
-    if helm list -n "$namespace" --kube-context "$cluster_context" | grep -qE "^$release_name\s"; then
+    if helm list -n "${namespace}" --kube-context "${cluster_context}" | grep -qE "^${release_name}\s"; then
         return 0 # Return 0 if the release is installed
     else
         return 1 # Return 1 if the release is not installed
@@ -82,34 +82,34 @@ import_redhat_images() {
         "${CONSUL_K8S_IMAGE}" \
         "${CONSUL_K8S_DP_IMAGE}"
 
-    if [[ "$CONSUL_IMAGE" == registry.connect.redhat.com/hashicorp/* ]]; then
-        "$OC_PATH" --context "$cluster_context" import-image "${CONSUL_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_IMAGE}" --confirm &>/dev/null || {
-            err "install-consul: Failed to import $CONSUL_IMAGE"
+    if [[ "${CONSUL_IMAGE}" == registry.connect.redhat.com/hashicorp/* ]]; then
+        "${OC_PATH}" --context "${cluster_context}" import-image "${CONSUL_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_IMAGE}" --confirm &>/dev/null || {
+            err "install-consul: Failed to import ${CONSUL_IMAGE}"
             return 1
         }
-        info "install-consul: Successfully imported $CONSUL_IMAGE"
+        info "install-consul: Successfully imported ${CONSUL_IMAGE}"
     else
-        warn "install-consul: Skipping import of $CONSUL_IMAGE (non registry.connect.redhat.com image)"
+        warn "install-consul: Skipping import of ${CONSUL_IMAGE} (non registry.connect.redhat.com image)"
     fi
 
-    if [[ "$CONSUL_K8S_IMAGE" == registry.connect.redhat.com/hashicorp/* ]]; then
-        "$OC_PATH" --context "$cluster_context" import-image "${CONSUL_K8S_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_K8S_IMAGE}" --confirm &>/dev/null || {
-            err "install-consul: Failed to import $CONSUL_K8S_IMAGE"
+    if [[ "${CONSUL_K8S_IMAGE}" == registry.connect.redhat.com/hashicorp/* ]]; then
+        "${OC_PATH}" --context "${cluster_context}" import-image "${CONSUL_K8S_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_K8S_IMAGE}" --confirm &>/dev/null || {
+            err "install-consul: Failed to import ${CONSUL_K8S_IMAGE}"
             return 1
         }
-        info "install-consul: Successfully imported $CONSUL_K8S_IMAGE"
+        info "install-consul: Successfully imported ${CONSUL_K8S_IMAGE}"
     else
-        warn "install-consul: Skipping import of $CONSUL_IMAGE (non registry.connect.redhat.com image)"
+        warn "install-consul: Skipping import of ${CONSUL_IMAGE} (non registry.connect.redhat.com image)"
     fi
 
-    if [[ "$CONSUL_K8S_DP_IMAGE" == registry.connect.redhat.com/hashicorp/* ]]; then
-        "$OC_PATH" --context "$cluster_context" import-image "${CONSUL_K8S_DP_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_K8S_DP_IMAGE}" --confirm &>/dev/null || {
-            err "install-consul: Failed to import $CONSUL_K8S_DP_IMAGE"
+    if [[ "${CONSUL_K8S_DP_IMAGE}" == registry.connect.redhat.com/hashicorp/* ]]; then
+        "${OC_PATH}" --context "${cluster_context}" import-image "${CONSUL_K8S_DP_IMAGE#registry.connect.redhat.com/}" --from="${CONSUL_K8S_DP_IMAGE}" --confirm &>/dev/null || {
+            err "install-consul: Failed to import ${CONSUL_K8S_DP_IMAGE}"
             return 1
         }
-        info "install-consul: Successfully imported $CONSUL_K8S_DP_IMAGE"
+        info "install-consul: Successfully imported ${CONSUL_K8S_DP_IMAGE}"
     else
-        warn "install-consul: Skipping import of $CONSUL_IMAGE (non registry.connect.redhat.com image)"
+        warn "install-consul: Skipping import of ${CONSUL_IMAGE} (non registry.connect.redhat.com image)"
     fi
     return 0
 }
@@ -117,7 +117,7 @@ import_redhat_images() {
 validate_ns() {
   local cluster_context="$1"
   local namespace="$2"
-  if ! "$OC_PATH" get namespace --context "$cluster_context" --no-headers -o name | grep -E "$namespace" >/dev/null 2>&1; then
+  if ! "${OC_PATH}" get namespace --context "${cluster_context}" --no-headers -o name | grep -E "${namespace}" >/dev/null 2>&1; then
       return 1
   fi
   return 0
@@ -127,7 +127,7 @@ validate_secret() {
   local cluster_context="$1"
   local namespace="$2"
   local secret="$3"
-  if ! "$OC_PATH" get secret --context "$cluster_context" --namespace "$namespace" --no-headers -o name | grep -E "$secret" >/dev/null 2>&1; then
+  if ! "${OC_PATH}" get secret --context "${cluster_context}" --namespace "${namespace}" --no-headers -o name | grep -E "${secret}" >/dev/null 2>&1; then
       return 1
   fi
   return 0
@@ -146,9 +146,9 @@ create_secret() {
     local secret_name="$3"
     local key="$4"
 
-    info "install-consul: Creating generic secret $secret_name in ns $namespace | $cluster_context"
-    "$OC_PATH" --context "$cluster_context" -n "$namespace" create secret generic "$secret_name" --from-literal="key=$key" >/dev/null 2>&1 || true
-    validate_secret "$cluster_context" "$namespace" "$secret_name" || {
+    info "install-consul: Creating generic secret ${secret_name} in ns ${namespace} | ${cluster_context}"
+    "${OC_PATH}" --context "${cluster_context}" -n "${namespace}" create secret generic "${secret_name}" --from-literal="key=${key}" >/dev/null 2>&1 || true
+    validate_secret "${cluster_context}" "${namespace}" "${secret_name}" || {
         return 1
     }
 }
@@ -158,24 +158,24 @@ create_consul_project() {
     local namespace="$2"
 
     info "install-consul: Creating 'consul' project (namespace)"
-    "$OC_PATH" adm --context "$cluster_context" new-project "$namespace" >/dev/null 2>&1 || {
+    "${OC_PATH}" adm --context "${cluster_context}" new-project "${namespace}" >/dev/null 2>&1 || {
         warn "install-consul: Failed to create 'consul' project (may already be created)!"
     }
     info "install-consul: Setting admin cluster context"
-    "$OC_PATH" config use-context "${CLUSTER_NAME}" >/dev/null 2>&1 || {
+    "${OC_PATH}" config use-context "${CLUSTER_NAME}" >/dev/null 2>&1 || {
         err "install-consul: Failed to set context to cluster admin context ${CLUSTER_NAME}"
         exit
     }
-    validate_ns "$cluster_context" "$namespace" || {
-        err "install-consul: '$namespace' creation validation failed!"
+    validate_ns "${cluster_context}" "${namespace}" || {
+        err "install-consul: '${namespace}' creation validation failed!"
         return 1
     }
     info "install-consul: Creating 'consul' project pull-secret"
-    "$OC_PATH" create -f /root/pull-secret.yaml --context "$cluster_context" --namespace "$namespace" >/dev/null 2>&1 || {
+    "${OC_PATH}" create -f /root/pull-secret.yaml --context "${cluster_context}" --namespace "${namespace}" >/dev/null 2>&1 || {
         warn "install-consul: Failed to create 'consul' project pull-secret (/root/pull-secret.yaml - may already be created)!"
     }
-    validate_secret "$cluster_context" "$namespace" pull-secret || {
-        err "install-consul: '$namespace' project secret 'pull-secret' validation failed!"
+    validate_secret "${cluster_context}" "${namespace}" pull-secret || {
+        err "install-consul: '${namespace}' project secret 'pull-secret' validation failed!"
         return 1
     }
 }
@@ -185,18 +185,18 @@ apply_network_attachment_def() {
     local namespace="$2"
 
     info "install-consul: Applying consul-cni network-attachment-definition.yaml"
-    "$OC_PATH" --context "$cluster_context" apply -f crds/network-attachment-definition.yaml >/dev/null 2>&1 || {
+    "${OC_PATH}" --context "${cluster_context}" apply -f crds/network-attachment-definition.yaml >/dev/null 2>&1 || {
         return 1
     }
 }
 
 apply_consul_scc() {
     info "install-consul: Applying consul-tproxy-scc.yaml"
-    "$OC_PATH" apply -f scc/consul-tproxy-scc.yaml >/dev/null 2>&1 || {
+    "${OC_PATH}" apply -f scc/consul-tproxy-scc.yaml >/dev/null 2>&1 || {
         return 1
     }
     info "install-consul Attaching consul-tproxy-scc *==> system:serviceaccounts:consul"
-    "$OC_PATH" adm policy add-scc-to-group consul-tproxy-scc system:serviceaccounts:consul >/dev/null 2>&1 || {
+    "${OC_PATH}" adm policy add-scc-to-group consul-tproxy-scc system:serviceaccounts:consul >/dev/null 2>&1 || {
         return 1
     }
 }
@@ -204,7 +204,7 @@ apply_consul_scc() {
 apply_proxy_defaults() {
     local cluster_context="$1"
     info "install-consul: Applying crds/proxy-defaults.yaml"
-    "$OC_PATH" apply --context "$cluster_context" -f crds/proxy-defaults.yaml >/dev/null 2>&1 || {
+    "${OC_PATH}" apply --context "${cluster_context}" -f crds/proxy-defaults.yaml >/dev/null 2>&1 || {
         return 1
     }
 }
@@ -216,9 +216,9 @@ confirm() {
     local response
 
     while true; do
-        prompt "$prompt [y/n]: "
+        prompt "${prompt} [y/n]: "
         read -r response </dev/tty
-        case "$response" in
+        case "${response}" in
             [yY][eE][sS]|[yY]) return 0 ;;  # User confirmed
             [nN][oO]|[nN]) return 1 ;;      # User denied
             *) echo "Please respond with yes or no." ;;  # Invalid response
@@ -229,22 +229,22 @@ confirm() {
 enableHelmRepo
 
 for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
-    if [ "$UPGRADE" = false ]; then
+    if [ "${UPGRADE}" = false ]; then
         enforce_pull_secret_name || {
             err "install-consul: Failed to update pull-secret.yaml name to 'pull-secret'!"
             exit
         }
-        create_consul_project "$cluster_context" consul || {
+        create_consul_project "${cluster_context}" consul || {
             err "install-consul: Failed to establish 'consul' project configuration!"
             exit
         }
-        create_secret "$cluster_context" "consul" "license" "$CONSUL_LICENSE" || {
+        create_secret "${cluster_context}" "consul" "license" "${CONSUL_LICENSE}" || {
             err "install-consul: Failed to create CONSUL_LICENSE secret in 'consul' namespace!"
             exit
         }
         if [ "$(yq '.terminatingGateways.gateways[].extraVolumes' <values-ent.yaml )" != null ]; then
-            info "install-consul: Creating/verifying root-tgw-certs in ns consul | $cluster_context"
-            kubectl --context "$cluster_context" --namespace consul create secret generic root-tgw-certs --from-file=tgw/certs/ca-roots.pem >/dev/null 2>&1 || true
+            info "install-consul: Creating/verifying root-tgw-certs in ns consul | ${cluster_context}"
+            kubectl --context "${cluster_context}" --namespace consul create secret generic root-tgw-certs --from-file=tgw/certs/ca-roots.pem >/dev/null 2>&1 || true
         fi
     fi
     print_msg "install-consul: Current image settings:" \
@@ -252,7 +252,7 @@ for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
         "${CONSUL_K8S_IMAGE}" \
         "${CONSUL_K8S_DP_IMAGE}"
     if confirm 'Import images from RedHat registry to cluster? (any key to continue | ctrl+c to cancel)'; then
-        import_redhat_images "$cluster_context" || {
+        import_redhat_images "${cluster_context}" || {
             err "install-consul: Failed during image import from RedHat container registry!"
             exit
         }
@@ -287,9 +287,9 @@ for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
         err "install-consul: Failed to install consul release ${HELM_RELEASE_NAME}"
         exit
     }
-    info "install-consul: Waiting for $HELM_RELEASE_NAME mesh-gateway to become ready (90s)"
-    "$OC_PATH" wait \
-        --context "$cluster_context" \
+    info "install-consul: Waiting for ${HELM_RELEASE_NAME} mesh-gateway to become ready (90s)"
+    "${OC_PATH}" wait \
+        --context "${cluster_context}" \
         --namespace consul \
         --for=condition=ready pod \
         --selector=app=consul,component=mesh-gateway \
@@ -297,7 +297,7 @@ for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
             warn "install-consul: Timed out waiting for mesh-gateway pod (90s)"
         }
 
-    apply_network_attachment_def "$cluster_context" consul || {
+    apply_network_attachment_def "${cluster_context}" consul || {
         err "install-consul: Failed to apply network-attachment-policy definition!"
         exit
     }
@@ -306,8 +306,8 @@ for cluster_context in "${CLUSTER_CONTEXTS[@]}"; do
     consul_control_plane_version="$K8s_VERSION"
     consul_k8s_required_ver="1.5.1"
 
-    if version_greater_equal "$consul_control_plane_version" "$consul_k8s_required_ver"; then
-        info "install-consul: $consul_control_plane_version >= $consul_k8s_required_ver, skipping custom SCC creation."
+    if version_greater_equal "${consul_control_plane_version}" "${consul_k8s_required_ver}"; then
+        info "install-consul: ${consul_control_plane_version} >= ${consul_k8s_required_ver}, skipping custom SCC creation."
     else
         if confirm 'Configure custom SCC 'consul-tproxy-scc'? (any key to continue | ctrl+c to cancel)'; then
             apply_consul_scc || {

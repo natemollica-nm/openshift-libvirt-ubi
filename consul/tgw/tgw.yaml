@@ -1,0 +1,14 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: TerminatingGateway
+metadata:
+  name: terminating-gateway
+spec:
+  services:
+    - name: "*"
+      namespace: default
+#    - name: google
+#      sni: www.example.org
+#      caFile: /etc/ssl/certs/ca-certificates.crt
+      # disableAutoHostRewrite: true
+      # sni: kubernetes.svc.cluster.local
+# https://github.com/hashicorp/consul-k8s/issues/1486

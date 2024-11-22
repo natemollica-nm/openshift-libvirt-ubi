@@ -1,0 +1,22 @@
+{
+  "Node": "backend-db-virtual-node-0",
+  "Address": "backend.default.svc.cluster.local",
+  "Partition": "$PARTITION",
+  "Service": {
+    "ID": "backend-db",
+    "Service": "backend-db",
+    "Address": "$BACKEND_DB_SVC_IP",
+    "TaggedAddresses": {
+      "lan": {
+        "address": "$BACKEND_DB_POD_IP",
+        "port": 5432
+      }
+    },
+    "Partition": "$PARTITION",
+    "Port": 5432
+  },
+  "locality": {
+    "region": "$REGION",
+    "zone": "$ZONE"
+  }
+}

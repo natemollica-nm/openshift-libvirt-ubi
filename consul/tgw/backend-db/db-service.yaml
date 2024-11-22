@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-db
+  namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-db
+  namespace: default
+spec:
+  selector:
+    app: backend-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-db
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-db
+  template:
+    metadata:
+      name: backend-db
+      namespace: default
+      labels:
+        app: backend-db
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'false'
+        'k8s.v1.cni.cncf.io/networks': '[{ "name":"consul-cni" }]'
+    spec:
+      serviceAccountName: backend-db
+      containers:
+        - name: backend-db
+          image: nicholasjackson/fake-service:v0.26.2
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+          env:
+            - name: NAME
+              value: "backend-db"
+            - name: MESSAGE
+              value: "PostgreSQL Database - External DB Service for Backend"
+            - name: LOG_LEVEL
+              value: trace
+            - name: LISTEN_ADDR
+              value: 0.0.0.0:5432
+          ports:
+            - name: http
+              containerPort: 5432
+              protocol: TCP
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 5432
+            initialDelaySeconds: 5
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 5432
+            initialDelaySeconds: 5
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5432
+            initialDelaySeconds: 5
+            failureThreshold: 2
+            periodSeconds: 5

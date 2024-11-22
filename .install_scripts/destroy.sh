@@ -18,12 +18,12 @@ remove_vm() {
     mac=$(virsh domiflist "$vm" | awk '/network/ {print $5}')
     dhcp_lease=$(virsh net-dumpxml "${VIR_NET}" | grep '<host ' | grep "$mac" | sed 's/^[ ]*//')
 
-    echo -n "XXXX> Deleting DHCP reservation for VM $vm: "
+    echo -n "====> Deleting DHCP reservation for VM $vm: "
     virsh net-update "${VIR_NET}" delete ip-dhcp-host --xml "$dhcp_lease" --live --config >/dev/null 2>&1 || \
         echo -n "Failed to delete DHCP reservation (ignoring) ... "
     ok
 
-    echo -n "XXXX> Deleting VM $vm: "
+    echo -n "====> Deleting VM $vm: "
     virsh destroy "$vm" >/dev/null 2>&1 || echo -n "Failed to stop VM (ignoring) ... "
     virsh undefine "$vm" --remove-all-storage >/dev/null 2>&1 || echo -n "Failed to delete VM (ignoring) ... "
     ok
@@ -43,7 +43,7 @@ remove_network() {
     if [[ -n "$uuid" ]]; then
         check_if_we_can_continue "Deleting libvirt network $network"
 
-        echo -n "XXXX> Deleting libvirt network $network: "
+        echo -n "====> Deleting libvirt network $network: "
         virsh net-destroy "$network" >/dev/null 2>&1 || echo -n "Failed to destroy network (ignoring) ... "
         virsh net-undefine "$network" >/dev/null 2>&1 || echo -n "Failed to undefine network (ignoring) ... "
         ok
@@ -59,7 +59,7 @@ remove_directory() {
     if [[ -d "$dir" ]]; then
         check_if_we_can_continue "Removing directory $dir"
 
-        echo -n "XXXX> Deleting directory $dir: "
+        echo -n "====> Deleting directory $dir: "
         rm -rf "$dir" || echo -n "Failed to delete directory (ignoring) ... "
         ok
     fi
@@ -94,7 +94,7 @@ remove_file() {
     if [[ -f "$file" ]]; then
         check_if_we_can_continue "Removing file $file"
 
-        echo -n "XXXX> Removing file $file: "
+        echo -n "====> Removing file $file: "
         rm -f "$file" >/dev/null 2>&1 || echo -n "Failed to remove file (ignoring) ... "
         ok
     fi

@@ -1,8 +1,24 @@
 #!/usr/bin/env bash
 
-./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
-./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
-./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6
+#./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-4
+#./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-5
+#./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name worker-6
+
+add_node() {
+    local name="$1"
+
+    echo -n "====> Adding OCP node ${name} to ${CLUSTER_NAME}: "
+    if grep -q "${name}.${CLUSTER_NAME}.${BASE_DOM}" < <(oc get nodes); then
+        ok "${name}.${CLUSTER_NAME}.${BASE_DOM} already present"
+    else
+        ./add_node.sh --cpu 8 --memory 16000 --add-disk 50 --add-disk 100 --name "${name}"
+    fi
+    return 0
+}
+
+for node in 4 5 6; do
+  add_node worker-"${node}"
+done
 
 #################################################
 #### Persistent storage using local volumes #####
@@ -11,8 +27,6 @@
 oc adm new-project openshift-local-storage
 oc annotate namespace openshift-local-storage openshift.io/node-selector=''
 oc annotate namespace openshift-local-storage workload.openshift.io/allowed='management'
-
-
 
 cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1
@@ -37,10 +51,22 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 
-oc get pods -n openshift-local-storage
+echo -n "====> Waiting for local-storage-operator pod to become ready: "
+oc wait \
+    --for=condition=ready pod \
+    --namespace openshift-local-storage \
+    --selector=name=local-storage-operator \
+    --timeout=90s >/dev/null 2>&1 || err "Failed to deploy local-storage-operator pod, exiting..."
+ok
 
 # ClusterServiceVersion
-oc get csvs -n openshift-local-storage
+echo -n "====> Waiting for ClusterServiceVersion: "
+csvs_name=
+while [ -z "${csvs_name}" ]; do
+    csvs_name="$(oc get ClusterServiceVersion -n openshift-local-storage --output=name)"
+    [ -z "${csvs_name}" ] && echo -n "." && sleep 1
+done; ok
+
 
 ####################################################################################################
 #############  Provisioning local volumes by using the Local Storage Operator  #####################
@@ -72,14 +98,4 @@ spec:
       volumeMode: Filesystem
       devicePaths:
         - /dev/vdb
-EOF
-
-
-cat <<EOF | oc apply -f -
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-sc
-provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
-volumeBindingMode: WaitForFirstConsumer
 EOF

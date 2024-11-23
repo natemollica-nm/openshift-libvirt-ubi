@@ -221,16 +221,16 @@ verify_dns_resolution() {
 approve_csrs() {
     echo
     echo "============== Node CSR Approval =============="
-    echo -n "====> Waiting for ${NODE}.${CLUSTER_NAME} to join node pool: "
+    echo -n "====> Waiting for ${NODE}.${CLUSTER_NAME} CSRs: "
     sleep 15
-    while true; do
-        if grep -q "${NODE}.${CLUSTER_NAME}" <<< "$(oc get nodes)"; then
-            ok
-            break
+    local csr_present
+    while [ -z "${csr_present}" ]; do
+        csr_present=$(oc get csr | grep Pending 2>/dev/null)
+        if [ -z "${csr_present}" ]; then
+            echo -n "."
+            sleep 5
         fi
-        echo -n "."
-        sleep 5
-    done
+    done; ok
     while true; do
         echo -n "====> Retrieving pending CSRs (2 CSR per node) for approval: "
         # Wait a few seconds before checking again

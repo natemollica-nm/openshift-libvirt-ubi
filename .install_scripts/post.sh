@@ -56,15 +56,15 @@ copy_post_scripts() {
 # Function to copy scripts if they exist
 copy_directory() {
     local source_dir="$1"
-    local dest_dir="${SETUP_DIR}"
+    local dest_dir="${SETUP_DIR}/${2}"
 
+    echo -n "====> Copying directory ${source_dir}/ --> ${dest_dir}"
     if [[ -d "${source_dir}" ]]; then
-        [[ -d "${dest_dir}" ]] || mkdir -p "${dest_dir}"
+        [[ -d "${dest_dir}" ]] || mkdir -p "${dest_dir}" >/dev/null 2>&1 || true
         cp -a "${source_dir}"/. "${dest_dir}"/ || {
             echo "Warning: Failed to copy directory ${source_dir} to ${dest_dir}."
             return 1
-        }
-        echo "Directory copied from ${source_dir} to ${dest_dir}."
+        }; ok
     else
         echo "Warning: No directory found at ${source_dir}."
     fi
@@ -73,4 +73,4 @@ copy_directory() {
 # Execute the functions
 create_env_file
 copy_post_scripts
-copy_directory "${SDIR}"/consul
+copy_directory "${SDIR}"/consul consul

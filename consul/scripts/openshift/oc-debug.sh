@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
+eval "$(cat ../env)"
 eval "$(cat scripts/logging.sh)"
 eval "$(cat scripts/formatting.env)"
 
 # Global Variables
-export CONTEXT=dc1
+export CONTEXT="${CLUSTER_NAME}"
 export DEBUG_POD
 export DEBUG_NAMESPACE
 export SELECTED_POD
@@ -27,7 +28,7 @@ cleanup() {
 
 # Define the banner function
 banner() {
-  echo -e "\n${LIGHT_CYAN}${BOLD}Consul K8s on AWS OpenShift | OC Debug${RESET}${LIGHT_CYAN}${RESET}"
+  echo -e "\n${LIGHT_CYAN}${BOLD}Consul K8s on Libvirt | OC Debug${RESET}${LIGHT_CYAN}${RESET}"
   echo -e "${DIM}::OpenShift Debug Helper Script::${RESET}\n"
 }
 
@@ -451,7 +452,7 @@ while [ "$#" -gt 0 ]; do
     case "${1%=*}" in  # This extracts the key part before any '=' character
       --context)
           CONTEXT="$2"
-          shift
+          shift 2
           ;;
       --tcp-dump|-t)
           TCPDUMP=true

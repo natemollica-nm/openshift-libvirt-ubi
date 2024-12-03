@@ -9,8 +9,6 @@ ok() { echo -e "${1:-ok}"; }
 # Ensure the script is run as root
 [[ "$(whoami)" != "root" ]] && exec sudo "$0" "$@"
 
-set -e
-
 # Help function
 show_help() {
     echo
@@ -222,14 +220,13 @@ approve_csrs() {
     echo
     echo "============== Node CSR Approval =============="
     echo -n "====> Waiting for ${NODE}.${CLUSTER_NAME} CSRs: "
-    sleep 15
+    sleep 35
     local csr_present
     while [ -z "${csr_present}" ]; do
-        csr_present=$(oc get csr | grep Pending 2>/dev/null)
-        if [ -z "${csr_present}" ]; then
-            echo -n "."
+        csr_present=$(oc get csr --ignore-not-found | grep "Pending" 2>/dev/null)
+        [ -z "${csr_present}" ] && \
+            echo -n "." && \
             sleep 5
-        fi
     done; ok
     while true; do
         echo -n "====> Retrieving pending CSRs (2 CSR per node) for approval: "

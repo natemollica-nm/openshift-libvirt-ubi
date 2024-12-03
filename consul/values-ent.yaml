@@ -175,7 +175,7 @@ ui:
           - ""
 
 terminatingGateways:
-  enabled: false
+  enabled: true
   logLevel: trace
   defaults:
     replicas: 1
